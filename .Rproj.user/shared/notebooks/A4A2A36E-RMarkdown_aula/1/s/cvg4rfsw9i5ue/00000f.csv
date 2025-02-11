@@ -1,0 +1,2 @@
+"0","autoplot(ts.gas, size=0.8, col=""green"")+"
+"0","  theme_classic()"
