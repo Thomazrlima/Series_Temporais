@@ -1,11 +1,10 @@
 ---
 title: "**Resolução dos exercícios**"
-author: "nome"
+author: "Thomaz Rodrigues Lima"
 fontsize: 14pt
-#output: pdf_document
 output: word_document
 ---
-  
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(fpp2)
@@ -13,10 +12,55 @@ library(ggplot2)
 library(tseries)
 load("C:/PENTES/Series_Temporais/aula1.RData")
 ```
+
+# Questão 1
+
+### a)
+```{r}
+ggplot(energy) +
+  aes(x = as.factor(month), y = energy_demand, fill = as.factor(month)) +
+  geom_boxplot(colour = "#112446") +
+  xlab("") +
+  ylab(iconv("Utilização de Energia", from = "latin1", to = "UTF-8")) +
+  theme_minimal()
+```
+### b) De acordo com o gráfico podemos vizualizar que o maior consumo da-se nos mezes de verão Europeu, com um especial destaque para o mês de julho. Outrem, sendo o mês que menos se consome energia, abril.
+
+### c)
+
+```{r}
+class(energy)
+```
+### d)
+```{r}
+plot(energy$energy_demand)
+```
+### e)
+
+```{r}
+ts.energy<-ts(energy$energy_demand, frequency = 12, start = c(2012,1))
+```
+
+### f)
+
+```{r}
+ggplot2::autoplot(ts.energy) +
+  ggtitle("Consumo de Energia ao Longo do Tempo") +
+  xlab("Tempo") +
+  ylab("Consumo de Energia") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14)
+  )
+
+```
+
 # Questão 2
 
 ### a)
-```{r, , out.width= "60%",fig.align='center'}
+```{r}
 ts.gas <-ts(NATURALGAS, frequency = 12, start = c(2000,1))
 ```
 ### b)
@@ -89,6 +133,33 @@ autoplot(bricksq)+
 autoplot(lynx)
 ```
 
+# Questão 6
+
+### b)
+
+```{r}
+autoplot(gold)
+```
+Podemos observar uma tendência crescente até meados do dia 800, após essa data, uma certa tendência decrescente, uma falta de sazonalidade. Um grande Outlayer e alguns dias sem dados
+
+### c)
+
+```{r}
+frequency(gold)
+```
+
+### d)
+
+```{r}
+which.max(gold)
+```
+### e)
+
+```{r}
+anyNA(gold)
+```
+
+
 # Questão 7
 
 ```{r, out.width= "60%",fig.align='center'}
@@ -104,3 +175,65 @@ ggsubseriesplot(usdeaths)+
   ggtitle("Média de Acidentes por Mês")
 ```
 
+title: "**Resolução dos exercícios 2**"
+
+# Questão 1
+
+###) a
+
+```{r}
+beer.1 <- window(ausbeer, start = 1992)
+gglagplot(beer)+theme_bw()
+```
+
+```{r}
+ggAcf(beer.1)
+```
+É uma série trimestral, com uma correlação de 4 em 4
+
+```{r}
+ggAcf(ts.ph)
+```
+```{r}
+ggAcf(ts.energy, lag.max = 50)
+```
+Aqui de 12 em 12, que indica que a série é Mensal
+
+```{r}
+ggAcf(ts.gas, lag.max = 100)
+```
+Mais uma vez de 12 em 12, ou seja, mensal
+
+```{r}
+ggAcf(gold,lag.max = 200)
+```
+Claramente a série não tem sazonalidade
+
+
+# Questão 1
+
+### a)
+```{r}
+ggAcf(hsales, lag.max = 100)
+autoplot(hsales)
+```
+```{r}
+gglagplot(hsales)
+```
+
+É um fenômeno ciclico, mas não sazonal
+
+```{r}
+ggAcf(usdeaths)
+```
+Tem sazonalidade, mas não uma tendência muito forte
+
+```{r}
+ggAcf(gasoline)
+```
+```{r}
+autoplot(gasoline)
+```
+
+
+Tem uma forte tendência, mas não uma sazonalidade
