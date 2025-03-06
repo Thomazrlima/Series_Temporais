@@ -582,3 +582,82 @@ autoplot(plastics)+
   autolayer(valores_ajustados_STL)
 ```
 
+# Lista 4
+
+## Questão 1
+
+```{r}
+autoplot(goog)
+```
+
+Uma vez que a série temporal não apresenta sazonalidade, o método snaive() não é adequado. Assim, só iremos calcular previsões para os métodos restantes:
+  - naive()
+  - rwf() drift
+  - meanf()
+  
+```{r}
+# mean
+goog.fmean <- meanf(goog,h=100)$mean
+
+# naive
+goog.naive <- naive(goog, h=100)$mean
+
+# drift
+
+goog.drift <- rwf(goog, drift = TRUE, h=100)$mean
+```
+
+```{r}
+autoplot(goog)+
+  autolayer(goog.fmean, series = "Média")+
+  autolayer(goog.naive, series = "Naive")+
+  autolayer(goog.drift, series = "Drift")
+```
+
+```{r}
+autoplot(auscafe)
+
+auscafe.mean <- meanf(auscafe, h=100)$mean
+auscafe.naive <- naive(auscafe, h=100)$mean
+auscafe.seasonal <- snaive(auscafe, h=100)$mean
+auscafe.drift <- rwf(auscafe, drift = TRUE, h=100)$mean
+```
+
+```{r}
+autoplot(auscafe)+
+  autolayer(auscafe.mean, series = "Media")+
+  autolayer(auscafe.naive, series = "Naive")+
+  autolayer(auscafe.seasonal, series = "Sesonal Naive")+
+  autolayer(auscafe.drift, series = "Drift")
+```
+## Questão 4
+
+```{r}
+autoplot(dowjones)
+```
+
+```{r}
+## Treino
+
+dimen <- length(dowjones) - 18 + 1
+dj.treino <- window(dowjones, end=61)
+dj.teste <- window(dowjones, start=61)
+
+length(dj.teste)
+```
+Com base no gráfico do gráfico da série vamos aplicar os naive e drift
+
+```{r}
+dj.naive <- naive(dj.treino, h=18)$mean
+dj.drift <- rwf(dj.treino, drift = TRUE, h = 18)$mean
+
+autoplot(dj.teste)+
+  autolayer(dj.drift)+
+  autolayer(dj.naive)
+```
+
+```{r}
+accuracy(dj.naive, dj.teste)[,c("RMSE","MAE")]
+accuracy(dj.drift, dj.teste)[,c("RMSE","MAE")]
+```
+
