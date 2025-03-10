@@ -1,0 +1,103 @@
+---
+title: "Carmelo"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+load("C:/PENTES/Series_Temporais/consola_e_redes.RData")
+
+```
+
+13-16, meus dados
+
+```{r}
+VRSA<-Dados_Faro |>
+  filter(Concelho == "Vila Real de Santo António") |>
+  select(-Concelho)
+
+Bispo<-Dados_Faro |>
+  filter(Concelho == "Vila do Bispo") |>
+  select(-Concelho)
+
+Tavira<-Dados_Faro |>
+  filter(Concelho == "Tavira") |>
+  select(-Concelho)
+
+Silves<-Dados_Faro |>
+  filter(Concelho == "Silves") |>
+  select(-Concelho)
+
+VRSA$Data <- trimws(VRSA$Data)
+VRSA$DataDay <- paste0(VRSA$Data, "-01")
+VRSA$DataDay<- as.Date(VRSA$DataDay, format = "%Y-%m-%d")
+VRSA <- VRSA |>
+  select(-Data) |>
+  arrange(DataDay) 
+VRSA <- VRSA |>
+  group_by(DataDay) |>
+  mutate(Consumo = mean(Energia)) |>
+  distinct(DataDay, Consumo)
+
+Bispo$Data <- trimws(Bispo$Data)
+Bispo$DataDay <- paste0(Bispo$Data, "-01")
+Bispo$DataDay<- as.Date(Bispo$DataDay, format = "%Y-%m-%d")
+Bispo <- Bispo |>
+  select(-Data) |>
+  arrange(DataDay) 
+Bispo <- Bispo |>
+  group_by(DataDay) |>
+  mutate(Consumo = mean(Energia)) |>
+  distinct(DataDay, Consumo)
+
+Tavira$Data <- trimws(Tavira$Data)
+Tavira$DataDay <- paste0(Tavira$Data, "-01")
+Tavira$DataDay<- as.Date(Tavira$DataDay, format = "%Y-%m-%d")
+Tavira <- Tavira |>
+  select(-Data) |>
+  arrange(DataDay) 
+Tavira <- Tavira |>
+  group_by(DataDay) |>
+  mutate(Consumo = mean(Energia)) |>
+  distinct(DataDay, Consumo)
+
+Silves$Data <- trimws(Silves$Data)
+Silves$DataDay <- paste0(Silves$Data, "-01")
+Silves$DataDay<- as.Date(Silves$DataDay, format = "%Y-%m-%d")
+Silves <- Silves |>
+  select(-Data) |>
+  arrange(DataDay) 
+Silves <- Silves |>
+  group_by(DataDay) |>
+  mutate(Consumo = mean(Energia)) |>
+  distinct(DataDay, Consumo)
+```
+
+```{r}
+ts.VRSA <- ts(VRSA$Consumo, start = c(2020,11), frequency = 12)
+ts.Bispo <- ts(Bispo$Consumo, start = c(2020,11), frequency = 12)
+ts.Tavira <- ts(Tavira$Consumo, start = c(2020,11), frequency = 12)
+ts.Silves <- ts(Silves$Consumo, start = c(2020,11), frequency = 12)
+```
+
+```{r}
+autoplot(ts.VRSA)
+```
+
+```{r}
+autoplot(ts.Bispo)
+```
+
+```{r}
+autoplot(ts.Tavira)
+```
+
+```{r}
+autoplot(ts.Silves)
+```
+

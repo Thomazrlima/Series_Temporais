@@ -61,7 +61,7 @@ ggplot2::autoplot(ts.energy) +
 
 ### a)
 ```{r}
-ts.gas <-ts(NATURALGAS, frequency = 12, start = c(2000,1))
+ts.gas <-ts(NATURALGAS$NATURALGAS, frequency = 12, start = c(2000,1))
 ```
 ### b)
 ```{r}
@@ -674,5 +674,58 @@ autoplot(chicken)+
   autolayer(chicken.naive)+
   autolayer(chicken.seasonal)+
   autolayer(chicken.drift)
+```
+
+## Questão 7
+
+### a)
+
+```{r}
+natgas.adt <- decompose(ts.gas)
+natgas.adt.fit<-ts.gas-remainder(natgas.adt)
+
+accuracy(natgas.adt.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+```
+```{r}
+natgas.mul<-decompose(ts.gas, type="mult")
+natgas.mul.fit<-ts.gas/remainder(natgas.mul)
+accuracy(natgas.mul.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+```
+
+```{r}
+rob<-test.Outliers.STL(ts.gas)
+stl.peri<-stl(ts.gas, s.window = "periodic", robust = rob)
+stl.peri.fit <- ts.gas-remainder(stl.peri) 
+accuracy(stl.peri.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+
+stl.8<-stl(ts.gas, s.window = 8, robust = rob)
+stl.8.fit<-ts.gas-remainder(stl.8)
+accuracy(stl.8.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+
+stl.13<-stl(ts.gas, s.window = 13, robust = rob)
+stl.13.fit<-ts.gas-remainder(stl.13)
+accuracy(stl.13.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+```
+
+```{r}
+autoplot(ts.gas)+
+  autolayer(natgas.adt.fit)+
+  autolayer(stl.peri.fit)+
+  autolayer(stl.8.fit)+
+  autolayer(stl.13.fit)
+```
+
+```{r}
+accuracy(natgas.adt.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+accuracy(stl.8.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+```
+
+```{r}
+gas.snaive <- snaive(ts.gas, h=12)$mean
+```
+
+```{r}
+autoplot(ts.gas)+
+  autolayer(gas.snaive)
 ```
 
