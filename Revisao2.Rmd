@@ -1,0 +1,64 @@
+---
+title: "Revisao2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp2)
+library(ggplot2)
+library(tseries)
+load("C:/PENTES/Series_Temporais/aula1.RData")
+```
+
+# Questão 1
+
+```{r}
+gglagplot(writing)
+```
+
+```{r}
+ggAcf(writing)
+```
+
+## Questão 2
+
+1-B, Sazonalidade com uma certa tendência, mas ambas mais fortes
+2-A, Sazonalidade com uma certa tendência
+3-D, Tendência muito forte
+4-C, Pouca sazonalidade e tendência fraca
+
+## Questão 3
+
+```{r}
+dgoog <- diff(goog)
+```
+
+```{r}
+ggAcf(dgoog)
+```
+
+Não há padrões claros de periodicidade ou tendência. Apenas o 1 lag tem um valor significativo e os demais estão dentro do intervalo de confiança.
+
+## Questão 4
+
+a) Será que todas as figuras indicam que os dados são ruído branco?
+
+Sim
+
+b) Existem diferenças entre as figuras? Comente.
+
+Sim, podemos observar que da série x1 até a x2 está a diminuir a amplitude desse intervalo, o mesmo de x2 para x3. 
+
+c) Porque é que os valores críticos estão a distâncias diferentes da média de zero? Porque são as autocorrelações diferentes em cada figura quando cada uma delas se refere ao ruído branco?
+
+A dimensão é diferente, o intervalo diminui pois a dimensão da série está a aumentar
+
+## Questão 5
+Associe a cada série temporal a respectiva função de autocorrelação.
+
+1-C
+2-E
+3-A
+4-B
+5-D

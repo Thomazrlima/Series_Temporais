@@ -661,3 +661,18 @@ accuracy(dj.naive, dj.teste)[,c("RMSE","MAE")]
 accuracy(dj.drift, dj.teste)[,c("RMSE","MAE")]
 ```
 
+```{r}
+chicken.mean <- meanf(chicken, h=10)$mean
+chicken.naive <- naive(chicken, h=10)$mean
+chicken.seasonal <- snaive(chicken, h=10)$mean
+chicken.drift <- rwf(chicken, drift = TRUE, h=10)$mean
+```
+
+```{r}
+autoplot(chicken)+
+  autolayer(chicken.mean)+
+  autolayer(chicken.naive)+
+  autolayer(chicken.seasonal)+
+  autolayer(chicken.drift)
+```
+

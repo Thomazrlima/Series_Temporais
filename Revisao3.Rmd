@@ -1,0 +1,71 @@
+---
+title: "Revisao3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp2)
+library(ggplot2)
+library(tseries)
+load("C:/PENTES/Series_Temporais/aula1.RData")
+```
+
+## Questão 1
+
+Para cada uma das séries temporais, faça um gráfico dos dados Encontre o
+valor apropriado para λ, a transformação Box-Cox, de modo a estabilizar a
+variância. Averigue o efeito da transformação nos dados e comente se esta é
+necessária.
+
+```{r}
+autoplot(enplanements)
+```
+
+```{r}
+lam1 <- BoxCox.lambda(enplanements)
+lam1
+```
+```{r}
+bc.enpl <- BoxCox(enplanements, lambda = lam1)
+autoplot(bc.enpl)
+```
+
+## Questão 2
+
+O conjunto de dados de plastics contém as vendas mensais (em milhares) do produto A durante cinco anos.
+
+a) Represente graficamente a série temporal. É possível identificar flutuações sazonais?
+
+```{r}
+autoplot(plastics)
+```
+Além de uma sazonalidade também podemos observar uma tendência crescente
+
+```{r}
+ggseasonplot(plastics)
+```
+
+
+b) Use o método de decomposição aditivo para obter a tendência e os índices sazonais. Em qual do(s) meses as vendas do produto A foi mais alta? E a mais baixa?
+
+```{r}
+plastics.decAd <- decompose(plastics, type = "additive")
+```
+
+```{r}
+autoplot(plastics.decAd)
+```
+
+
+
+c) Use o método de decomposição multiplicativo para obter a tendência e os índices sazonais. Em qual do(s) meses as vendas do produto A foi mais alta? E a mais baixa?
+
+
+d) Determine e represente graficamente a série temporal sem sazonalidade para cada um dos métodos de decomposição, isto é, y aditivo e y multiplicativo.
+
+
+e) Use agora o método de decomposição STL com s.window=“periodic” e represente graficamente. Averigue a existência de outliers.
+
+
+f) Considerando os 3 ajustamentos aos dados, qual lhe parece ser o melhor ajuste? Use as medidas de erro.

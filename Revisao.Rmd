@@ -1,0 +1,196 @@
+---
+title: "Revisao"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp2)
+library(ggplot2)
+library(tseries)
+load("C:/PENTES/Series_Temporais/aula1.RData")
+```
+
+# Lista 1
+
+## Questão 1
+
+Consider o ficheiro energy.txt (Pasta Dados na tutoria) que contém a
+informação relativamente à procura de energia eletrica.
+
+a) Importe os dados.
+ok
+
+b) Observe a variabilidades dos dados por mês através de uma caixa de
+bigodes. Em que meses houve maior e menor procura de energia?
+
+```{r}
+boxplot(energy_demand ~ month, data=energy, 
+        xlab="Mês", ylab="Demanda Energética", 
+        main="Distribuição da Demanda Energética por Mês", 
+        col="lightblue", border="darkblue")
+```
+
+Observa-se claramente que os meses onde o consumo de energia é mais elevado são os que correspondem ao verão Europeu, marcado pelas altas temperaturas e maior procura por ambientes climatizados. Por outro lado os meses correspondentes ao outono e a primavera são os que apresentam a menor procura de energia, devido a sua temperatura muito devido a sua temperatura mais agradável.
+
+c) Qual a classe dos dados energy?
+
+```{r}
+class(energy)
+```
+d) Efetue um gráfico para estes dados e averigue se será esta a melhor
+representação gráfica? Comente.
+
+```{r}
+plot(energy$energy_demand)
+```
+
+Não é uma vizualização que auxilia muito, pois ela apenas apresenta alguns pontos de dados ao longo do index... O que basicamente não nos informa nada
+
+e) Converta os dados num objecto ts() (atribua a designação ts.energy).
+
+```{r}
+energy.ts <- ts(energy$energy_demand, frequency = 12, start = c(2012,1))
+```
+
+f) Represente os dados graficamente, atribuindo um título e uma legenda
+para os eixos.
+
+```{r}
+autoplot(energy.ts, xlab="Mês", ylab="Demanda Energética")
+  
+```
+
+g) Consegue identificar algum padrão? Se sim, identifique.
+
+Apenas podemos observar uma sazonalidade, mas não uma tendência
+
+## Questão 2
+Os dados NATURALGAS.xlxs contêm o consumo mensal de
+gás natural (em bilhões de metros cúbicos) nos Estados Unidos desde
+janeiro de 2000.
+
+a) Importe a série temporal GAS_natural e crie o objecto de classe ts().
+
+```{r}
+ts.gas <-ts(NATURALGAS, frequency = 12, start = c(2000,1))
+```
+
+b) Qual a dimensão da série temporal? Use a função length().
+
+```{r}
+length(ts.gas)
+```
+```{r}
+autoplot(ts.gas, col="darkblue", xlab = "Tempo", ylab = "Consumo de gás em 10^9 m^3")
+```
+
+d) Efetue um gráfico apropriado para visualizar o consumo mensal. Qual
+ou quais os meses em que o consumo é mais alto e mais baixo.
+
+```{r}
+ggsubseriesplot(ts.gas)
+```
+
+Janeiro, o áuge do inverno
+
+Outra forma de fazer essa representação gráfica
+```{r}
+ggseasonplot(ts.gas)
+```
+
+## Questão 3
+
+Os dados ph.xlxs contêm o pH médio da água do mar com base em medições efetuadas no Hawaii, desde o 4º trimestre de 1988.
+
+a) Importe a série temporal, crie o objecto de classe ts() e atribua a
+designação ts.ph.
+
+```{r}
+ts.ph <- ts(ph, frequency = 4, start = c(1988,4))
+```
+
+b) Qual a dimensão da série temporal?
+
+```{r}
+length(ts.ph)
+```
+c) Represente graficamente a série temporal. Observe este gráfico e comente.
+
+```{r}
+autoplot(ts.ph)
+```
+
+Podemos observar que a série temporal apresenta uma tendência decrescente e uma sazonalidade.
+
+d) Use um gráfico apropriado para observar o padrão sazonal e comente.
+
+```{r}
+ggseasonplot(ts.gas)
+```
+
+## Questão 4
+
+a) Use a função help() para saber mais acerca dos dados destas séries
+temporais.
+
+```{r}
+help(dole)
+```
+
+b) Represente-as graficamente e indique a sua dimensão.
+
+```{r}
+autoplot(dole)
+```
+
+```{r}
+length(dole)
+```
+
+## Questão 5
+
+Os dados arrivals (Package: fpp2) contêm as chegadas trimestrais à Austrália (em milhares) vindos do Japão, Nova Zelândia, Inglaterra e Estados Unidos.
+
+a) Use autoplot( )para comparar as diferenças entre as chegadas destes países.
+
+```{r}
+autoplot(arrivals)
+```
+
+
+b) Com base na alínea anterior, observe a representção gráfica destas séries temporais. Consegue identificar algo invulgar?
+
+Observa-se que o gráfico apresenta uma tendência de crescimento médio desde o primeiro trimestre de 1981.
+
+Enquanto os demais três países mantêm comportamentos citado, o Japão registra um aumento até os anos 1990, seguido por uma queda.
+
+## Questão 6
+
+b) Represente-as graficamente e faça uma breve descrição.
+
+```{r}
+autoplot(gold)
+```
+
+A série gold não apresenta uma sasonalidade clara, nem uma tendência
+
+c) Qual a frequência de cada uma das séries? Use a função frequency().
+
+```{r}
+frequency(gold)
+```
+
+d) Use which.max() para detetar o outlier existente na série tenporal gold.
+
+```{r}
+which.max(gold)
+```
+
+e) Averigue se há dados omissos (missing values, NA) nas séries temporais.
+Use a função anyNA()
+
+```{r}
+anyNA(gold)
+```
+
