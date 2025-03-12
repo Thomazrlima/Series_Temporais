@@ -1,0 +1,320 @@
+---
+title: "Revisao4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp2)
+library(ggplot2)
+library(tseries)
+load("C:/PENTES/Series_Temporais/aula1.RData")
+```
+
+## Questão 1
+
+Obtenha h=10 previsões para as séries temporais goog and auscafe utilizando os métodos simples para previsão, quando adequados. Represente graficamente os resultados.
+
+```{r}
+naive.gold <- naive(gold, h=100)$mean
+snaive.gold <- snaive(gold, h=100)$mean
+mean.gold <- meanf(gold, h=100)$mean
+drift.gold <- rwf(gold, drift = TRUE, h=100)$mean
+```
+
+```{r}
+autoplot(gold) +
+  autolayer(naive.gold, series="Naive") +
+  autolayer(snaive.gold, series="Seasonal Naive") +
+  autolayer(mean.gold, series="Mean Forecast") +
+  autolayer(drift.gold, series="Drift") +
+  ggtitle("Forecasting Gold Prices") +
+  xlab("Time") +
+  ylab("Gold Price")
+```
+
+## Questão 3
+
+Considere os dados visnights (package fpp2).
+
+a) Use window()para criar 3 conjuntos de treino para visnights[,"QLDMetro"], omitindo os últimos 1, 2, e 3 anos. Designe-os por train1, train2 e train3, respectivamente.
+
+```{r}
+data <- visnights[,"QLDMetro"]
+tail(data)
+
+train1 <- window(data, end = c(2016, 4))
+train2 <- window(data, end = c(2015, 4))
+train3 <- window(data, end = c(2014, 4))
+
+```
+
+b) Obtenha previsões para 1 ano para cada um dos conjuntos de treino usando o método naive sazonal. Designe-os por f1, f2 e f3.
+
+```{r}
+
+f1 <- snaive(train1, h=4)
+f2 <- snaive(train2, h=4)
+f3 <- snaive(train3, h=4)
+
+f1
+f2
+f3
+```
+
+c) Use a função accuracy()para comparar o MAPE para os 3 conjuntos de teste. Comente os resultados.
+
+```{r}
+test2 <- window(data, start = c(2016, 1), end = c(2016, 4))
+test3 <- window(data, start = c(2015, 1), end = c(2015, 3))
+
+accuracy(f2, test2)
+accuracy(f3, test3)
+
+```
+
+O modelo apresenta um desempenho razoável, com erros mais baixos no conjunto de teste do que no de treinamento em ambos os casos. Isso pode indicar que o modelo está generalizando bem, embora haja sempre algum nível de erro residual.
+
+## Questão 4
+
+Considere a série temporal dowjones (package fma).
+
+a) Represente-a graficamente e comente.
+
+```{r}
+autoplot(dowjones)
+```
+
+É uma série que não apresenta sazonalidade e possui uma tendência variável
+
+b) Use window()para criar os conjuntos de treino (dj.treino) e de teste (‘dj.teste), sendo este último constituído por 18 dias (h=18).
+
+```{r}
+tamnho = length(dowjones) - 18 + 1
+tamnho
+```
+```{r}
+dj.treino = window(dowjones, end = 61)
+dj.teste = window(dowjones, start = 61)
+```
+
+```{r}
+dj.naive = naive(dj.treino, h = 18)$mean
+dj.drift <- rwf(dj.treino, drift = TRUE, h = 18)$mean
+```
+
+```{r}
+autoplot(dj.teste)+
+  autolayer(dj.drift)+
+  autolayer(dj.naive)
+```
+```{r}
+accuracy(dj.naive, dj.teste,)[,c("RMSE","MAE")]
+accuracy(dj.drift, dj.teste,)[,c("RMSE","MAE")]
+```
+
+c) Considerando os métodos de previsão mais simples, quais lhe parecem ser adequados? Justifique.
+
+Dentre os 2 o naive parece mais adequado, pois a série entra em uma leve tendência negativa, mas o drift está em uma tendência crescente
+
+## Questão 5
+
+Considere os dados hsales (package fma).
+
+a) Represente-a graficamente e comente.
+
+```{r}
+autoplot(hsales)
+```
+
+b) Construa os dados de treino e de teste, onde este último é constituído pelos últimos 2 anos. Designe-os por hsales.train e hsales.test.
+
+```{r}
+hsales
+```
+
+```{r}
+hs.treino <- window(hsales, end = c(1993, 12))
+hs.teste <- window(hsales, start = c(1994, 1))
+```
+
+
+c) Use os vários métodos de previsão mais simples, para obter previsões. Compare os resultados nos dados de teste. Qual lhe parece mais adequado?
+
+```{r}
+hs.snaive <- snaive(hs.treino, h=24)
+hs.naive <- naive(hs.treino, h=24)
+hs.mean <- meanf(hs.treino, h=24)
+hs.drift <- rwf(hs.treino, drift = TRUE, h=24)
+```
+
+```{r}
+autoplot(hsales) +
+  autolayer(hs.snaive, series = "SNAIVE", PI = FALSE) +
+  autolayer(hs.naive, series = "NAIVE", PI = FALSE) +
+  autolayer(hs.mean, series = "MEANF", PI = FALSE) +
+  autolayer(hs.drift, series = "DRIFT", PI = FALSE) +
+  ggtitle("Previsões para 24 meses a partir de 1993") +
+  xlab("Ano") +
+  ylab("Vendas Mensais") +
+  scale_colour_manual(values = c("black", "red", "blue", "green")) +
+  theme_minimal()
+```
+```{r}
+accuracy_snaive <- accuracy(hs.snaive, hs.teste)[, c("RMSE", "MAE")]
+accuracy_naive <- accuracy(hs.naive, hs.teste)[, c("RMSE", "MAE")]
+accuracy_mean <- accuracy(hs.mean, hs.teste)[, c("RMSE", "MAE")]
+accuracy_drift <- accuracy(hs.drift, hs.teste)[, c("RMSE", "MAE")]
+
+accuracy_snaive
+accuracy_naive
+accuracy_mean
+accuracy_drift
+```
+
+Em o melhor desempenho no conjunto de teste, com RMSE de 6.1609 e MAE de 5.0000. Esse modelo parece ser o mais preciso em termos de erro quadrático médio e erro absoluto médio.
+
+d) Aplique uma transformação BoxCox. Use os vários métodos de previsão mais simples, para obter previsões. Qual lhe parece mais adequado?
+
+boxcox.lamb() (Descobre o melhor lambda)
+boxcox(data, lambda = x)
+
+```{r}
+lam2 <- BoxCox.lambda(hsales)
+bc.hs <- BoxCox(hsales, lambda = lam2)
+```
+
+
+```{r}
+bchs.treino <- window(bc.hs, end = c(1993, 12))
+bchs.teste <- window(bc.hs, start = c(1994, 1))
+```
+
+
+```{r}
+bchs.snaive <- snaive(bchs.treino, h=24)
+bchs.naive <- naive(bchs.treino, h=24)
+bchs.mean <- meanf(bchs.treino, h=24)
+bchs.drift <- rwf(bchs.treino, drift = TRUE, h=24)
+```
+
+```{r}
+autoplot(bc.hs) +
+  autolayer(bchs.snaive, series = "SNAIVE", PI = FALSE) +
+  autolayer(bchs.naive, series = "NAIVE", PI = FALSE) +
+  autolayer(bchs.mean, series = "MEANF", PI = FALSE) +
+  autolayer(bchs.drift, series = "DRIFT", PI = FALSE) +
+  ggtitle("Previsões para 24 meses a partir de 1993") +
+  xlab("Ano") +
+  ylab("Vendas Mensais") +
+  scale_colour_manual(values = c("black", "red", "blue", "green")) +
+  theme_minimal()
+```
+```{r}
+bcaccuracy_snaive <- accuracy(bchs.snaive, bchs.teste)[, c("RMSE", "MAE")]
+bcaccuracy_naive <- accuracy(bchs.naive, bchs.teste)[, c("RMSE", "MAE")]
+bcaccuracy_mean <- accuracy(bchs.mean, bchs.teste)[, c("RMSE", "MAE")]
+bcaccuracy_drift <- accuracy(bchs.drift, bchs.teste)[, c("RMSE", "MAE")]
+
+bcaccuracy_snaive
+bcaccuracy_naive
+bcaccuracy_mean
+bcaccuracy_drift
+```
+
+
+e) Compare os resultados obtidos entre as alíneas c) e d). Será que a transformação BoxCox foi útil?
+
+Com certeza, a taxa de erro despencou
+
+6) Considere os dados ausbeer, dados trimestrais sobre a produção de cerveja na Austrália desde 1992. Faça beer<-window(ausbeer, start=1992).
+
+a) Usando o método naïve sazonal, determine as previsões para h = 8.
+
+```{r}
+beer<-window(ausbeer, start=1992)
+beer_snaive <- snaive(beer, h = 8)$mean
+```
+
+b) Aplique uma transformação logaritmica e determine as previsões para h = 8.
+
+```{r}
+beer_log <- log(beer)
+beer_log_snaive <- snaive(beer_log, h = 8)$mean
+```
+
+c) Aplique uma transformação BoxCox e determine as previsões para h = 8.
+
+```{r}
+lamlam <- BoxCox.lambda(beer)
+beer_box <- BoxCox(beer, lambda = lamlam)
+beer_box_snaive <- snaive(beer_box, h = 8)$mean
+```
+
+d) Represente graficamente a série temporal e as previsões obtidas nas alíneas anteriores. Comente.
+
+```{r}
+autoplot(beer) +
+  autolayer(beer_snaive, series = "Naïve Sazonal", PI = FALSE) +
+  autolayer(beer_log_snaive, series = "Log Naïve Sazonal", PI = FALSE) +
+  autolayer(beer_box_snaive, series = "Box-Cox Naïve Sazonal", PI = FALSE) +
+  ggtitle("Série Temporal de Produção de Cerveja e Previsões") +
+  xlab("Ano") +
+  ylab("Produção de Cerveja") +
+  scale_colour_manual(values = c("black", "red", "blue")) +
+  theme_minimal()
+```
+
+## Questão 7
+
+Considere os dados NATURALGAS.xlxs do exercício 2, ficha 1.
+a) Decomponha a série temporal considerando o tipo aditivo e multiplicativo. Avalie e comente a qualidade do ajustamento, determinando as medidas na tabela abaixo.
+
+```{r}
+natgas.adt <- decompose(ts.gas)
+natgas.adt.fit<-ts.gas-remainder(natgas.adt)
+
+accuracy(natgas.adt.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+```
+```{r}
+natgas.mul<-decompose(ts.gas, type="mult")
+natgas.mul.fit<-ts.gas/remainder(natgas.mul)
+accuracy(natgas.mul.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+```
+
+Com base em todas as três métricas (MAE, RMSE e MAPE), o Modelo 1 tem um desempenho superior, apresentando menores erros absolutos, menores erros quadráticos e uma menor porcentagem de erro médio. Portanto, Modelo 1 parece ser o melhor modelo entre os dois.
+
+b) Aplique a decomposição de Loess com s.window=“periodic”, s.window=8, s.window=13. Avalie e comente a qualidade dos ajustamento, determinando as medidas na tabela abaixo.
+
+```{r}
+rob<-test.Outliers.STL(ts.gas)
+stl.peri<-stl(ts.gas, s.window = "periodic", robust = rob)
+stl.peri.fit <- ts.gas-remainder(stl.peri) 
+accuracy(stl.peri.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+
+stl.8<-stl(ts.gas, s.window = 8, robust = rob)
+stl.8.fit<-ts.gas-remainder(stl.8)
+accuracy(stl.8.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+
+stl.13<-stl(ts.gas, s.window = 13, robust = rob)
+stl.13.fit<-ts.gas-remainder(stl.13)
+accuracy(stl.13.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+```
+
+c) Com base nas 2 alíneas anteriores, qual o melhor ajustamento aos dados?
+Justifique.
+
+Se o foco for um erro percentual menor em relação à série, o modelo com s.window = 8 parece ser a melhor escolha. Se a preocupação for minimizar grandes erros pontuais, o modelo com s.window = 13 pode ser mais adequado.
+
+d) Com base na alínea anterior, obtenha e represente graficamente as
+previsões para o ano seguinte.
+
+```{r}
+gas.snaive <- snaive(ts.gas, h=12)$mean
+```
+
+```{r}
+autoplot(ts.gas)+
+  autolayer(gas.snaive)
+```
+

@@ -57,15 +57,206 @@ plastics.decAd <- decompose(plastics, type = "additive")
 autoplot(plastics.decAd)
 ```
 
+```{r}
+plastics.decAd$seasonal
+```
+Mês com maior venda: O maior valor nos índices sazonais é 265.32, correspondente a setembro.
+Mês com menor venda: O menor valor nos índices sazonais é -339.93, correspondente a fevereiro.
 
 
 c) Use o método de decomposição multiplicativo para obter a tendência e os índices sazonais. Em qual do(s) meses as vendas do produto A foi mais alta? E a mais baixa?
 
+```{r}
+plastics_decM <- decompose(plastics, type = "multi")
+```
+
+```{r}
+plastics_decM$seasonal
+```
+Mês com maior venda: O maior valor sazonal é 1.2314, correspondente a setembro.
+Mês com menor venda: O menor valor sazonal é 0.7103, correspondente a fevereiro.
 
 d) Determine e represente graficamente a série temporal sem sazonalidade para cada um dos métodos de decomposição, isto é, y aditivo e y multiplicativo.
+
+```{r}
+y_aditivo <- plastics - plastics.decAd$seasonal
+autoplot(y_aditivo)
+```
+```{r}
+y_multiplicativo <- plastics / plastics_decM$seasonal
+autoplot(y_multiplicativo)
+```
 
 
 e) Use agora o método de decomposição STL com s.window=“periodic” e represente graficamente. Averigue a existência de outliers.
 
+```{r}
+plastics.stl<-stl(plastics, s.window = "periodic")
+
+autoplot(plastics.stl)
+```
+```{r}
+max_residual_index <- which.max(abs(plastics.stl$time.series[, "remainder"]))
+
+min_residual_index <- which.min(abs(plastics.stl$time.series[, "remainder"]))
+
+max_residual_index
+min_residual_index
+```
+```{r}
+m = 12
+
+ma.plastics <- ma(plastics, m)
+
+autoplot(plastics)+
+  autolayer(ma.plastics)
+```
+
 
 f) Considerando os 3 ajustamentos aos dados, qual lhe parece ser o melhor ajuste? Use as medidas de erro.
+
+```{r}
+accuracy(plastics.decAd$trend, plastics)[, c("MAE", "RMSE", "MAPE")]
+accuracy(plastics_decM$trend, plastics)[, c("MAE", "RMSE", "MAPE")]
+accuracy(plastics.stl$time.series[, "trend"], plastics)[, c("MAE", "RMSE", "MAPE")]
+```
+
+O método STL apresenta o melhor desempenho para a série temporal plastics, sendo a melhor escolha entre os três métodos avaliados. 
+
+## Questão 3
+
+a) Represente os dados graficamente. Comente.
+
+```{r}
+vendas<-c(72,110,117,172,76,112,130,194,78,119,128,201,81,134,141,216)
+
+ts.vendas <- ts(vendas, frequency=4)
+ts.vendas
+```
+```{r}
+autoplot(ts.vendas, xlab = "Trimestre", ylab = "N° de vendas")
+
+```
+
+
+b) Considerando o modelo de decomposição multiplicativo, obtenha os índices sazonais. Em qual dos trimestres se observa um número mais elevado de vendas? Comente.
+
+```{r}
+ts.vendas.decM <- decompose(ts.vendas, type = "mult")
+
+autoplot(ts.vendas.decM)
+```
+
+```{r}
+ts.vendas.decM$seasonal
+```
+Q4 (Out-Dez) tem o maior índice sazonal (1.4825), indicando que esse é o período com maior volume de vendas.
+
+c) Ajuste o modelo de decomposição aditivo. Qual será o melhor ajustamento? Comente usando as medidas de erro.
+
+```{r}
+vendas.ajust<-vendas.decM$seasonal*vendas.decM$trend
+
+autoplot(ts.vendas)+
+  autolayer(vendas.ajust)
+```
+
+```{r}
+rt.vendas<-ts.vendas/vendas.ajust
+rt.vendas
+```
+
+```{r}
+vendas.decM$random
+```
+
+## Questão 4
+Considere os dados cangas (package expsmooth).
+
+a) Represente os dados graficamente e comente.
+
+```{r}
+autoplot(cangas)
+```
+```{r}
+ggseasonplot(cangas)
+```
+Podemos oberservar uma série com uma forte tendência crescente e uma sasonalidade bastante demarcada
+
+b) Aplique a decomposição STL com s.window="periodic",s.window=5 e s.window= 24. Em termos gráficos, qual lhe parece ser o melhor ajuste? Use as medidas de erro.
+
+```{r}
+cangas.peri <- stl(cangas, s.window="periodic")
+cangas.5 <- stl(cangas, s.window = 5)
+cangas.24 <- stl(cangas, s.window = 24)
+```
+
+```{r}
+autoplot(cangas.peri)
+```
+
+
+```{r}
+autoplot(cangas) +  
+  autolayer(cangas.peri$time.series[, "seasonal"] + cangas.peri$time.series[, "trend"], 
+            series = "Sazonal + Tendência (periodic)", color = "blue") +
+  autolayer(cangas.5$time.series[, "seasonal"] + cangas.5$time.series[, "trend"], 
+            series = "Sazonal + Tendência (s.window = 5)", color = "green") +
+  autolayer(cangas.24$time.series[, "seasonal"] + cangas.24$time.series[, "trend"], 
+            series = "Sazonal + Tendência (s.window = 24)", color = "red")
+
+```
+
+```{r}
+accuracy(cangas.peri$time.series[, "trend"], cangas)[, c("MAE", "RMSE", "MAPE")]
+accuracy(cangas.5$time.series[, "trend"], cangas)[, c("MAE", "RMSE", "MAPE")]
+accuracy(cangas.24$time.series[, "trend"], cangas)[, c("MAE", "RMSE", "MAPE")]
+```
+
+```{r}
+cangas.ajust1 <- cangas.peri$time.series[, "seasonal"] + cangas.peri$time.series[, "trend"]
+cangas.ajust2 <- cangas.5$time.series[, "seasonal"] + cangas.5$time.series[, "trend"]
+cangas.ajust3 <- cangas.24$time.series[, "seasonal"] + cangas.24$time.series[, "trend"]
+
+accuracy(cangas.ajust1, cangas)[, c("MAE", "RMSE", "MAPE")]
+accuracy(cangas.ajust2, cangas)[, c("MAE", "RMSE", "MAPE")]
+accuracy(cangas.ajust3, cangas)[, c("MAE", "RMSE", "MAPE")]
+```
+
+## Questão 5
+
+Considere a série temporal elecequip (package fpp2). Usando a decomposição de Loess com os parametros
+
+```{r}
+autoplot(elecequip)
+```
+
+
+a) s.window=7 and t.window=11
+
+```{r}
+decomp1 <- stl(elecequip, s.window = 7, t.window = 11)
+```
+
+b) s.window=14 and t.window=11
+
+```{r}
+decomp2 <- stl(elecequip, s.window = 14, t.window = 11)
+```
+
+qual é o melhor ajustamento? Justifique
+
+```{r}
+elecequip.ajust1 <- decomp1$time.series[, "seasonal"] + decomp1$time.series[, "trend"]
+elecequip.ajust2 <- decomp2$time.series[, "seasonal"] + decomp2$time.series[, "trend"]
+
+accuracy(elecequip.ajust1, elecequip)[, c("MAE", "RMSE", "MAPE")]
+accuracy(elecequip.ajust2, elecequip)[, c("MAE", "RMSE", "MAPE")]
+```
+```{r}
+autoplot(elecequip)+
+  autolayer(elecequip.ajust1)+
+  autolayer(elecequip.ajust2)
+```
+
+A decomposição com s.window = 7 e t.window = 11 apresenta melhor ajuste para a série temporal elecequip, pois possui métricas de erro menores em comparação com a decomposição com s.window = 14 e t.window = 11. Isso sugere que a combinação de janela sazonal de 7 períodos e janela temporal de 11 períodos resulta em uma melhor modelagem da série temporal.
