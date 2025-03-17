@@ -729,3 +729,141 @@ autoplot(ts.gas)+
   autolayer(gas.snaive)
 ```
 
+## Questão 8
+
+a)
+```{r}
+ts.FR <- ts(elec_FR$FR, start = c(2008,1), frequency = 12)
+```
+
+b)
+```{r}
+autoplot(ts.FR)
+```
+
+c)
+```{r}
+ggseasonplot(ts.FR)
+```
+
+d)
+```{r}
+di <- length(ts.FR)
+h <- 24
+
+elecFR.treino <- ts(ts.FR[1:(di-h)], frequency = 12, start = start(ts.FR))
+
+elecFR.teste <- ts(ts.FR[(di-h+1):di], frequency = 12, end = end(ts.FR))
+```
+
+e)
+```{r}
+decA.FR<-decompose(elecFR.treino)
+decM.FR<-decompose(elecFR.treino, type = "mult")
+```
+
+
+```{r}
+ajust.decA<-elecFR.treino-remainder(decA.FR)
+ajust.decM<-elecFR.treino/remainder(decM.FR)
+```
+
+```{r}
+accuracy(ajust.decA, elecFR.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajust.decM, elecFR.treino)[,c("MAE","RMSE","MAPE")]
+```
+
+f)
+```{r}
+decM.FR$figure
+```
+
+Janeiro mais alto e Agosto o mais baixo
+
+g)
+```{r}
+st<-decM.FR$seasonal
+at<-seasadj(decM.FR)
+```
+
+```{r}
+prev.st <- snaive(st, h)$mean
+```
+
+```{r}
+prev.meanf <- meanf(at, h)$mean
+
+prev.naive <- naive(at, h)$mean
+
+prev.drift <- rwf(at, h, drift = TRUE)$mean
+```
+
+```{r}
+prev.meanf.sanaive <- prev.st * prev.meanf
+prev.naive.sanaive <- prev.st * prev.naive
+prev.drift.sanaive <- prev.st * prev.drift
+```
+
+```{r}
+accuracy(prev.meanf.sanaive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.naive.sanaive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.drift.sanaive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+
+h)
+
+```{r}
+rob <- test.Outliers.STL(elecFR.treino)
+stl.peri.FR <- stl(elecFR.treino, s.window = "periodic", robust = rob)
+
+stl.7.FR <- stl(elecFR.treino, s.window = 7, robust = rob)
+
+stl.15.FR <- stl(elecFR.treino, s.window = 15, robust = rob)
+```
+
+```{r}
+ajuste.peri <- elecFR.treino-remainder(stl.peri.FR)
+ajuste.7 <- elecFR.treino-remainder(stl.7.FR)
+ajuste.15 <- elecFR.treino-remainder(stl.15.FR)
+```
+
+```{r}
+accuracy(ajuste.peri, elecFR.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajuste.7, elecFR.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajuste.15, elecFR.treino)[,c("MAE","RMSE","MAPE")]
+```
+
+i)
+```{r}
+st.7 <- seasonal(stl.7.FR)
+
+at.7 <- seasadj(stl.7.FR)
+```
+
+```{r}
+snaive.st.7 <- snaive(st.7, h)$mean
+
+###
+meanf.at.7 <- meanf(at.7, h)$mean
+naive.at.7 <- naive(at.7, h)$mean
+drift.at.7 <- rwf(at.7, h, drift = TRUE)$mean
+```
+
+```{r}
+prev.7.meanf <- snaive.st.7 + meanf.at.7
+prev.7.naive <- snaive.st.7 + naive.at.7
+prev.7.drift <- snaive.st.7 + drift.at.7
+```
+
+```{r}
+accuracy(prev.7.meanf, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.naive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.drift, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+
+j)
+```{r}
+autoplot(ts.FR)+
+  autolayer(prev.naive.sanaive)+
+  autolayer(prev.7.naive)
+```
