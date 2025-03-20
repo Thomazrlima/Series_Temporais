@@ -867,3 +867,174 @@ autoplot(ts.FR)+
   autolayer(prev.naive.sanaive)+
   autolayer(prev.7.naive)
 ```
+
+
+```{r}
+accuracy(prev.naive.sanaive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.naive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+
+```{r}
+checkresiduals(stl.7.FR$time.series[,"remainder"])
+```
+Uma vez que os resíduos não são independentes não podemos confiar nas previsões. Assim vamos testar esta hipótese de indepndência para o modelo de decomposição *multiplicativo*.
+
+```{r}
+checkresiduals(decM.FR$random)
+```
+
+# Questão 9
+
+
+a)  Separe os dados em elecES.treino e elecES.teste, onde o teste é constituído pelos últimos 12 meses.
+```{r}
+ts.ES <- ts(elec_ES$ES, start = c(2008,1), frequency = 12)
+```
+
+```{r}
+autoplot(ts.ES)
+```
+
+b) Utilize os métodos de previsão simples para obter previsões h=12 para os dados de treino.
+
+```{r}
+di <- length(ts.ES)
+h <- 12
+
+elecES.treino <- ts(ts.ES[1:(di-h)], frequency = 12, start = start(ts.ES))
+
+elecES.teste <- ts(ts.ES[(di-h+1):di], frequency = 12, end = end(ts.ES))
+```
+
+```{r}
+ES.fmean <- meanf(elecES.treino,h=12)$mean
+ES.naive <- naive(elecES.treino,h=12)$mean
+ES.snaive <- snaive(elecES.treino,h=12)$mean
+ES.drift <- rwf(elecES.treino,h=12,drift = TRUE)$mean
+```
+
+```{r}
+autoplot(ts.ES)+
+  autolayer(ES.fmean)+
+  autolayer(ES.naive)+
+  autolayer(ES.snaive)+
+  autolayer(ES.drift)
+```
+
+c) Utilize a decomposição clássica para decompor a série temporal de treino e obter previsões h=12.
+
+```{r}
+decA.ES<-decompose(elecES.treino)
+decM.ES<-decompose(elecES.treino, type = "mult")
+```
+
+
+```{r}
+ajust.decA.ES<-elecES.treino-remainder(decA.ES)
+ajust.decM.ES<-elecES.treino/remainder(decM.ES)
+```
+
+```{r}
+accuracy(ajust.decA.ES, elecES.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajust.decM.ES, elecES.treino)[,c("MAE","RMSE","MAPE")]
+```
+
+```{r}
+st.ES<-decM.ES$seasonal
+at.ES<-seasadj(decM.ES)
+```
+
+```{r}
+prev.st.ES <- snaive(st.ES, h)$mean
+
+prev.meanf.ES <- meanf(at.ES, h)$mean
+
+prev.naive.ES <- naive(at.ES, h)$mean
+
+prev.drift.ES <- rwf(at.ES, h, drift = TRUE)$mean
+```
+
+```{r}
+prev.meanf.sanaive.ES <- prev.st.ES * prev.meanf.ES
+prev.naive.sanaive.ES <- prev.st.ES * prev.naive.ES
+prev.drift.sanaive.ES <- prev.st.ES * prev.drift.ES
+```
+
+```{r}
+accuracy(prev.meanf.sanaive.ES, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.naive.sanaive.ES, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.drift.sanaive.ES, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+
+d) Utilize a decomposição de Loess, com s.window=“periodic”, “9” e “16”, para decompor a série temporal de treino e obter previsões h=12.
+
+```{r}
+rob <- test.Outliers.STL(elecES.treino)
+stl.peri.ES <- stl(elecES.treino, s.window = "periodic", robust = rob)
+
+stl.9.ES <- stl(elecES.treino, s.window = 9, robust = rob)
+
+stl.16.ES <- stl(elecES.treino, s.window = 16, robust = rob)
+```
+
+```{r}
+ajuste.peri.ES <- elecES.treino-remainder(stl.peri.ES)
+ajuste.9 <- elecES.treino-remainder(stl.9.ES)
+ajuste.16 <- elecES.treino-remainder(stl.16.ES)
+```
+
+```{r}
+accuracy(ajuste.peri, elecES.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajuste.9, elecES.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajuste.16, elecES.treino)[,c("MAE","RMSE","MAPE")]
+```
+
+i) terminar aqui
+```{r}
+st.9 <- seasonal(stl.7.FR)
+
+at.9 <- seasadj(stl.7.FR)
+```
+
+```{r}
+snaive.st.7 <- snaive(st.7, h)$mean
+
+###
+meanf.at.7 <- meanf(at.7, h)$mean
+naive.at.7 <- naive(at.7, h)$mean
+drift.at.7 <- rwf(at.7, h, drift = TRUE)$mean
+```
+
+```{r}
+prev.7.meanf <- snaive.st.7 + meanf.at.7
+prev.7.naive <- snaive.st.7 + naive.at.7
+prev.7.drift <- snaive.st.7 + drift.at.7
+```
+
+```{r}
+accuracy(prev.7.meanf, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.naive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.drift, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+
+j)
+```{r}
+autoplot(ts.FR)+
+  autolayer(prev.naive.sanaive)+
+  autolayer(prev.7.naive)
+```
+
+
+```{r}
+accuracy(prev.naive.sanaive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.naive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+
+```{r}
+checkresiduals(stl.7.FR$time.series[,"remainder"])
+```
+Uma vez que os resíduos não são independentes não podemos confiar nas previsões. Assim vamos testar esta hipótese de indepndência para o modelo de decomposição *multiplicativo*.
+
+```{r}
+checkresiduals(decM.FR$random)
+```
