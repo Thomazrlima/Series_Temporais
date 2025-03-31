@@ -1,0 +1,122 @@
+---
+title: "Markdown2"
+output: html_document
+---
+
+# Lista 5
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp2)
+library(ggplot2)
+library(tseries)
+load("C:/PENTES/Series_Temporais/aula1.RData")
+```
+
+Questão 1:
+
+```{r}
+autoplot(eggs)
+```
+
+
+```{r}
+eggs.ses <- ses(eggs, h=100)
+summary(eggs.ses)
+```
+
+```{r}
+autoplot(eggs, series = "eggs") +
+  autolayer(eggs.ses$fitted, series = "SES Forecast")
+```
+
+```{r}
+autoplot(eggs)+
+  autolayer(eggs.ses$mean)
+```
+
+```{r}
+eggs.holt <-holt(eggs, h=100)
+summary(eggs.holt)
+```
+
+```{r}
+autoplot(eggs, series = "EGGS", col = "1")+
+  autolayer(eggs.ses$fitted, series = "SES")+
+  autolayer(eggs.holt$fitted, series = "HOLT")
+```
+
+```{r}
+autoplot(eggs)+
+  autolayer(eggs.ses$mean)+
+  autolayer(eggs.holt$mean)
+```
+
+### b)
+Segundo o RMSE, o método que dá o melhor valor é o do Modelo de Alisamento Exponêncial Simples, com 26.56
+
+#### d)
+
+```{r}
+checkresiduals(eggs.ses$residuals)
+```
+
+```{r}
+autoplot(books)
+```
+
+### b) SES
+
+```{r}
+paper.ses <- ses(books[,c("Paperback")], h=4)
+
+hard.ses <- ses(books[,c("Hardcover")], h=4)
+
+summary(paper.ses)
+summary(hard.ses)
+```
+
+```{r}
+autoplot(books[,c("Paperback")], series = "Paperback")+
+  autolayer(paper.ses$mean)
+```
+
+```{r}
+autoplot(books[,c("Hardcover")], series = "Hardcover")+
+  autolayer(hard.ses$mean)
+```
+
+```{r}
+paper.holt <- holt(books[,c("Paperback")], h=4)
+hard.holt <- holt(books[,c("Hardcover")], h=4)
+```
+
+```{r}
+paper.holtD <- holt(books[,c("Paperback")], h=4, damped = TRUE)
+hard.holtD <- holt(books[,c("Hardcover")], h=4, damped = TRUE)
+```
+
+```{r}
+accuracy(paper.ses$fitted, books[,c("Paperback")])[,c("RMSE")]
+accuracy(paper.holt$fitted, books[,c("Paperback")])[,c("RMSE")]
+accuracy(paper.holtD$fitted, books[,c("Paperback")])[,c("RMSE")]
+```
+```{r}
+accuracy(hard.ses$fitted, books[,c("Hardcover")])[,c("RMSE")]
+accuracy(hard.holt$fitted, books[,c("Hardcover")])[,c("RMSE")]
+accuracy(hard.holtD$fitted, books[,c("Hardcover")])[,c("RMSE")]
+```
+
+```{r}
+autoplot(books[,c("Paperback")], series = "Paperback")+
+  autolayer(paper.ses$mean)+
+  autolayer(paper.holt$mean)+
+  autolayer(paper.holtD$mean)
+```
+
+```{r}
+autoplot(books[,c("Hardcover")], series = "Hardcover")+
+  autolayer(hard.ses$mean)+
+  autolayer(hard.holt$mean)+
+  autolayer(hard.holtD$mean)
+```
