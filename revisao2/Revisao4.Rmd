@@ -1,0 +1,697 @@
+---
+title: "Revisao4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp2)
+library(ggplot2)
+library(tseries)
+load("C:/PENTES/Series_Temporais/aula1.RData")
+```
+
+Revisão 4
+
+1) Obtenha h=10 previsões para as séries temporais goog and auscafe utilizando os métodos simples para previsão, quando adequados. Represente graficamente os resultados.
+
+
+```{r}
+naive.gold <- naive(gold, h=100)$mean
+snaive.gold <- snaive(gold, h=100)$mean
+mean.gold <- meanf(gold, h=100)$mean
+drift.gold <- rwf(gold, drift = TRUE, h=100)$mean
+```
+
+```{r}
+autoplot(gold) +
+  autolayer(naive.gold, series="Naive") +
+  autolayer(snaive.gold, series="Seasonal Naive") +
+  autolayer(mean.gold, series="Mean Forecast") +
+  autolayer(drift.gold, series="Drift") +
+  ggtitle("Forecasting Gold Prices") +
+  xlab("Time") +
+  ylab("Gold Price")
+```
+
+2) Considere as seguintes séries temporais:
+
+Para cada uma das séries temporais faça um gráfico com as previsões obtidas pelos métodos mean, naive, seasonal naive e drift, quando apropriado. Para cada um destes casos, acha que as previsões são razoáveis? Se respondeu não, como podem ser melhoradas?
+
+```{r}
+naive.chicken <- naive(chicken, h=10)$mean
+
+autoplot(chicken)+
+  autolayer(naive.chicken)
+```
+
+3) Considere os dados visnights (package fpp2).
+a) Use window()para criar 3 conjuntos de treino para visnights[,"QLDMetro"], omitindo os últimos 1, 2, e 3 anos. Designe-os por train1, train2 e train3, respectivamente.
+
+```{r}
+data <- visnights[,"QLDMetro"]
+tail(data)
+
+train1 <- window(data, end = c(2015, 4))
+test1  <- window(data, start = c(2016, 1), end = c(2016, 4))
+
+train2 <- window(data, end = c(2014, 4))
+test2  <- window(data, start = c(2015, 1), end = c(2015, 4))
+
+train3 <- window(data, end = c(2013, 4))
+test3  <- window(data, start = c(2014, 1), end = c(2014, 4))
+
+```
+
+b) Obtenha previsões para 1 ano para cada um dos conjuntos de treino usando o método naive sazonal. Designe-os por f1, f2 e f3.
+
+```{r}
+f1 <- snaive(train1, h = 4)
+f2 <- snaive(train2, h = 4)
+f3 <- snaive(train3, h = 4)
+```
+
+c) Use a função accuracy()para comparar o MAPE para os 3 conjuntos de teste. Comente os resultados.
+
+```{r}
+test1  <- window(data, start = c(2016, 1), end = c(2016, 4))
+test2 <- window(data, start = c(2015, 1), end = c(2015, 4))
+test3 <- window(data, start = c(2014, 1), end = c(2014, 4))
+
+accuracy(f1, test1)[,c ("RMSE")]
+accuracy(f2, test2)[,c ("RMSE")]
+accuracy(f3, test3)[,c ("RMSE")]
+```
+
+```{r}
+autoplot(window(data, start=c(2015,1))) +
+  autolayer(f1$mean, series="Previsão f1", PI=FALSE) +
+  autolayer(test1, series="Real f1") +
+  ggtitle("Previsão vs Real - f1 (Treino até 2015 Q4)") +
+  ylab("Visitantes") + xlab("Ano") +
+  guides(colour=guide_legend(title="Série")) +
+  theme_minimal()
+```
+
+```{r}
+# Plot f2
+autoplot(window(data, start=c(2014,1), end=c(2015,4))) +
+  autolayer(f2$mean, series="Previsão f2", PI=FALSE) +
+  autolayer(test2, series="Real f2") +
+  ggtitle("Previsão vs Real - f2 (Treino até 2014 Q4)") +
+  ylab("Visitantes") + xlab("Ano") +
+  guides(colour=guide_legend(title="Série")) +
+  theme_minimal()
+
+# Plot f3
+autoplot(window(data, start=c(2013,1), end=c(2014,4))) +
+  autolayer(f3$mean, series="Previsão f3", PI=FALSE) +
+  autolayer(test3, series="Real f3") +
+  ggtitle("Previsão vs Real - f3 (Treino até 2013 Q4)") +
+  ylab("Visitantes") + xlab("Ano") +
+  guides(colour=guide_legend(title="Série")) +
+  theme_minimal()
+
+```
+
+4) Considere a série temporal dowjones (package fma).
+a) Represente-a graficamente e comente.
+
+```{r}
+autoplot(dowjones)
+```
+
+É uma série Temporal sem saozonalidade, e de tendência crescente
+
+b) Use window()para criar os conjuntos de treino (dj.treino) e de teste (‘dj.teste), sendo este último constituído por 18 dias (h=18).
+
+```{r}
+tamanho <- length(dowjones) - 18
+
+dj.treino <- window(dowjones, end = tamanho)
+dj.teste  <- window(dowjones, start = tamanho + 1)
+
+length(dj.treino)
+length(dj.teste)
+length(dowjones)
+```
+
+
+c) Considerando os métodos de previsão mais simples, quais lhe parecem ser adequados? Justifique.
+
+Entre os métodos simples de previsão — naive e drift — o método naive mostrou-se mais adequado para este conjunto de dados, pois a janela de teste inicia-se justamente num ponto de inversão da tendência.
+
+O método drift, por pressupor a continuação de uma tendência linear baseada na trajetória histórica, torna-se inadequado nesse cenário, uma vez que ele projeta o comportamento passado para o futuro, falhando em captar a inflexão que ocorre. Por outro lado, o método naive, ao assumir que o próximo valor será igual ao último observado no treino, reage melhor a mudanças bruscas ou quebras na tendência.
+
+d) Com base na alínea anterior, obtenha previsões h = 18. Avalie a qualidade das previsões com base nas medidas MAPE e RMSE? Justifique.
+
+```{r}
+dj.naive = naive(dj.treino, h = 18)$mean
+dj.drift <- rwf(dj.treino, drift = TRUE, h = 18)$mean
+```
+
+```{r}
+autoplot(dj.teste)+
+  autolayer(dj.drift)+
+  autolayer(dj.naive)
+```
+
+```{r}
+accuracy(dj.naive, dj.teste,)[,c("RMSE","MAE")]
+accuracy(dj.drift, dj.teste,)[,c("RMSE","MAE")]
+```
+
+As métricas de erro confirmam a análise anterior: o modelo naive apresenta valores significativamente menores de RMSE e MAE, indicando que foi mais eficaz na previsão dos valores reais. O drift, ao insistir numa tendência crescente, gerou erros acumulados, refletidos no alto RMSE e MAE.
+
+
+5) Considere os dados hsales (package fma).
+a) Represente-a graficamente e comente.
+
+```{r}
+autoplot(hsales)
+```
+
+b) Construa os dados de treino e de teste, onde este último é constituído pelos últimos 2 anos. Designe-os por hsales.train e hsales.test.
+
+```{r}
+tail(hsales)
+
+hsales.train <- window(hsales, end = c(1993,12))
+hsales.test <- window(hsales, start = c(1994,1))
+```
+
+c) Use os vários métodos de previsão mais simples, para obter previsões. Compare os resultados nos dados de teste. Qual lhe parece mais adequado?
+
+```{r}
+hs.snaive <- snaive(hs.treino, h=24)
+hs.naive <- naive(hs.treino, h=24)
+hs.mean <- meanf(hs.treino, h=24)
+hs.drift <- rwf(hs.treino, drift = TRUE, h=24)
+```
+
+```{r}
+autoplot(hsales) +
+  autolayer(hs.snaive, series = "SNAIVE", PI = FALSE) +
+  autolayer(hs.naive, series = "NAIVE", PI = FALSE) +
+  autolayer(hs.mean, series = "MEANF", PI = FALSE) +
+  autolayer(hs.drift, series = "DRIFT", PI = FALSE) +
+  ggtitle("Previsões para 24 meses a partir de 1993") +
+  xlab("Ano") +
+  ylab("Vendas Mensais") +
+  scale_colour_manual(values = c("black", "red", "blue", "green")) +
+  theme_minimal()
+```
+
+```{r}
+accuracy(hs.snaive, hs.teste)[, c("RMSE", "MAE")]
+accuracy(hs.naive, hs.teste)[, c("RMSE", "MAE")]
+accuracy(hs.mean, hs.teste)[, c("RMSE", "MAE")]
+accuracy(hs.drift, hs.teste)[, c("RMSE", "MAE")]
+```
+
+O Snaive apresenta o menor RMSE e MAE, o que indica que, no geral, foi o modelo que mais se aproximou dos valores reais para o conjunto de teste. Este modelo utiliza a última observação como previsão e ajusta para comportamentos sazonais, sendo eficaz quando há padrões sazonais nos dados.
+
+d) Aplique uma transformação BoxCox. Use os vários métodos de previsão mais simples, para obter previsões. Qual lhe parece mais adequado?
+
+```{r}
+lam2 <- BoxCox.lambda(hsales)
+bc.hs <- BoxCox(hsales, lambda = lam2)
+```
+
+
+```{r}
+bchs.treino <- window(bc.hs, end = c(1993, 12))
+bchs.teste <- window(bc.hs, start = c(1994, 1))
+```
+
+
+```{r}
+bchs.snaive <- snaive(bchs.treino, h=24)
+bchs.naive <- naive(bchs.treino, h=24)
+bchs.mean <- meanf(bchs.treino, h=24)
+bchs.drift <- rwf(bchs.treino, drift = TRUE, h=24)
+```
+
+```{r}
+autoplot(bc.hs) +
+  autolayer(bchs.snaive, series = "SNAIVE", PI = FALSE) +
+  autolayer(bchs.naive, series = "NAIVE", PI = FALSE) +
+  autolayer(bchs.mean, series = "MEANF", PI = FALSE) +
+  autolayer(bchs.drift, series = "DRIFT", PI = FALSE) +
+  ggtitle("Previsões para 24 meses a partir de 1993") +
+  xlab("Ano") +
+  ylab("Vendas Mensais") +
+  scale_colour_manual(values = c("black", "red", "blue", "green")) +
+  theme_minimal()
+```
+
+
+```{r}
+accuracy(bchs.snaive, bchs.teste)[, c("RMSE", "MAE")]
+accuracy(bchs.naive, bchs.teste)[, c("RMSE", "MAE")]
+accuracy(bchs.mean, bchs.teste)[, c("RMSE", "MAE")]
+accuracy(bchs.drift, bchs.teste)[, c("RMSE", "MAE")]
+```
+Ainda o Snaive parece a mais adequada
+
+e) Compare os resultados obtidos entre as alíneas c) e d). Será que a transformação BoxCox foi útil?
+
+Este modelo foi o mais eficiente, com os menores valores de RMSE e MAE, o que sugere que a transformação Box-Cox foi útil. A transformação Box-Cox pode ajudar a estabilizar a variância e aproximar os dados de uma distribuição normal, o que melhora a eficácia de métodos como o Snaive que dependem de suposições sobre a distribuição dos dados.
+
+f) Averigue se os residuos são ruído branco.
+
+```{r}
+checkresiduals(bc.hs)
+```
+Como o p-valor é muito baixo, rejeitamos a hipótese nula, o que significa que os resíduos não são ruído branco.
+
+6) Considere os dados ausbeer, dados trimestrais sobre a produção de cerveja na Austrália desde 1992. Faça beer<-window(ausbeer, start=1992).
+
+a) Usando o método naïve sazonal, determine as previsões para h = 8.
+
+```{r}
+beer<-window(ausbeer, start=1992)
+```
+
+```{r}
+beer_snaive <- snaive(beer, h = 8)$mean
+```
+
+b) Aplique uma transformação logaritmica e determine as previsões para h = 8.
+
+```{r}
+beer_log <- log(beer)
+beer_log_snaive <- snaive(beer_log, h = 8)$mean
+```
+
+c) Aplique uma transformação BoxCox e determine as previsões para h = 8.
+
+```{r}
+lamlam <- BoxCox.lambda(beer)
+beer_box <- BoxCox(beer, lambda = lamlam)
+beer_box_snaive <- snaive(beer_box, h = 8)$mean
+```
+
+d) Represente graficamente a série temporal e as previsões obtidas nas alíneas anteriores. Comente.
+
+```{r}
+autoplot(beer) +
+  autolayer(beer_snaive, series = "Naïve Sazonal", PI = FALSE) +
+  ggtitle("Série Temporal de Produção de Cerveja e Previsões") +
+  xlab("Ano") +
+  ylab("Produção de Cerveja") +
+  theme_minimal()
+```
+
+```{r}
+autoplot(beer_log)+
+  autolayer(beer_log_snaive, series = "Log Naïve Sazonal", PI = FALSE)
+```
+
+```{r}
+autoplot(beer_box)+
+  autolayer(beer_box_snaive, series = "Box-Cox Naïve Sazonal", PI = FALSE)
+```
+
+
+e) Averigue se os resíduos são ruído branco. O que concluí?
+
+```{r}
+checkresiduals(beer_box_snaive)
+checkresiduals(beer_log_snaive)
+```
+
+Não podemos descartar a hipótese Nula, logo os resíduos são ruido branco
+
+
+7) Considere os dados NATURALGAS.xlxs do exercício 2, ficha 1.
+a) Decomponha a série temporal considerando o tipo aditivo e multiplicativo. Avalie e comente a qualidade do ajustamento, determinando as medidas na tabela abaixo.
+
+```{r}
+natgas.adt <- decompose(ts.gas)
+natgas.adt.fit<-ts.gas-remainder(natgas.adt)
+
+accuracy(natgas.adt.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+```
+```{r}
+natgas.mul<-decompose(ts.gas, type="mult")
+natgas.mul.fit<-ts.gas/remainder(natgas.mul)
+accuracy(natgas.mul.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+```
+
+Com base em todas as três métricas (MAE, RMSE e MAPE), o Modelo 1 tem um desempenho superior, apresentando menores erros absolutos, menores erros quadráticos e uma menor porcentagem de erro médio. Portanto, Modelo 1 parece ser o melhor modelo entre os dois.
+
+b) Aplique a decomposição de Loess com s.window=“periodic”, s.window=8, s.window=13. Avalie e comente a qualidade dos ajustamento, determinando as medidas na tabela abaixo.
+stl MAE RMSE MAPE
+s.window=“periodic”
+s.window=8
+s.window=13
+
+```{r}
+rob<-test.Outliers.STL(ts.gas)
+stl.peri <- stl(ts.gas, s.window = "periodic", robust = rob)
+accuracy(stl.peri.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+
+stl.8<-stl(ts.gas, s.window = 8, robust = rob)
+stl.8.fit<-ts.gas-remainder(stl.8)
+accuracy(stl.8.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+
+stl.13<-stl(ts.gas, s.window = 13, robust = rob)
+stl.13.fit<-ts.gas-remainder(stl.13)
+accuracy(stl.13.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
+```
+
+
+c) Com base nas 2 alíneas anteriores, qual o melhor ajustamento aos dados? Justifique.
+
+Se o foco for um erro percentual menor em relação à série, o modelo com s.window = 8 parece ser a melhor escolha. Se a preocupação for minimizar grandes erros pontuais, o modelo com s.window = 13 pode ser mais adequado.
+
+d) Com base na alínea anterior, obtenha e represente graficamente as previsões para o ano seguinte.
+
+```{r}
+gas.snaive <- snaive(ts.gas, h=12)$mean
+```
+
+```{r}
+autoplot(ts.gas)+
+  autolayer(gas.snaive)
+```
+
+8) O ficheiro elec_FR.xlxs contém o consumo mensal (Gigawatt/hora) de electricidade em França desde janeiro de 2008. Se necessário considere α = 5%.
+
+a) Importe os dados elec_FR.xlxs, crie o objecto de classe ts() e designe por ts.FR.
+
+```{r}
+ts.FR <- ts(elec_FR$FR, start = c(2008,1), frequency = 12)
+```
+
+b) Represente graficamente esta série temporal e comente.
+
+```{r}
+autoplot(ts.FR)
+```
+
+c) Efetue um gráfico apropriado para visualizar o consumo mensal. Qual ou quais os meses em que o consumo é mais alto e mais baixo. Comente. E relativamente à variação inter-anual? O que pode observar?
+
+```{r}
+ggseasonplot(ts.FR)
+```
+
+d) Separe os dados em elecFR.treino e elecFR.teste, onde o teste é constituído pelos últimos 24 meses.
+
+```{r}
+tamn <- length(ts.FR)
+h = 24
+
+elecFR.treino <- window(ts.FR[1:(tamn-h)])
+elecFR.teste <- window(ts.FR[tamn-h+1:tamn])
+
+length(ts.FR)
+length(elecFR.treino)
+length(elecFR.teste)
+```
+
+e) Decomponha a série temporal elecFR.train considerando o tipo aditivo (decA.FR) e multiplicativo (decM.FR). Qual o melhor ajustamento? Avalie e comente a qualidade do ajustamento, determinando as medidas de erro na tabela abaixo.
+
+```{r}
+decA.FR <- decompose(elecFR.treino)
+decM.FR<-decompose(elecFR.treino, type = "mult")
+
+ajust.decA<-elecFR.treino-remainder(decA.FR)
+ajust.decM<-elecFR.treino/remainder(decM.FR)
+
+accuracy(ajust.decA, elecFR.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajust.decM, elecFR.treino)[,c("MAE","RMSE","MAPE")]
+```
+
+f) Considerando o melhor ajustamento em e), obtenha os índices sazonais. Em qual dos meses o consumo foi mais elevado? E o mais baixo? Comente.
+
+```{r}
+decM.FR$figure
+```
+
+
+g) Considerando o melhor ajustamento em e), determine as previsões pontuais até ao final de 2023, recorrendo a vários métodos de previsão simples.
+
+```{r}
+st<-decM.FR$seasonal
+at<-seasadj(decM.FR)
+```
+
+```{r}
+prev.st <- snaive(st, h)$mean
+```
+
+```{r}
+prev.meanf <- meanf(at, h)$mean
+
+prev.naive <- naive(at, h)$mean
+
+prev.drift <- rwf(at, h, drift = TRUE)$mean
+```
+
+```{r}
+prev.meanf.sanaive <- prev.st * prev.meanf
+prev.naive.sanaive <- prev.st * prev.naive
+prev.drift.sanaive <- prev.st * prev.drift
+```
+
+```{r}
+accuracy(prev.meanf.sanaive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.naive.sanaive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.drift.sanaive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+
+
+h) Decomponha a série temporal elecFR.train usando a decomposição de Loess considerando s.window=“periodic”, s.window=“7” e s.window=“15”. Qual o melhor ajustamento, com base nas medida de erro abaixo? Comente.
+
+
+```{r}
+rob <- test.Outliers.STL(elecFR.treino)
+stl.peri.FR <- stl(elecFR.treino, s.window = "periodic", robust = rob)
+
+stl.7.FR <- stl(elecFR.treino, s.window = 7, robust = rob)
+
+stl.15.FR <- stl(elecFR.treino, s.window = 15, robust = rob)
+```
+
+```{r}
+ajuste.peri <- elecFR.treino-remainder(stl.peri.FR)
+ajuste.7 <- elecFR.treino-remainder(stl.7.FR)
+ajuste.15 <- elecFR.treino-remainder(stl.15.FR)
+```
+
+```{r}
+accuracy(ajuste.peri, elecFR.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajuste.7, elecFR.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajuste.15, elecFR.treino)[,c("MAE","RMSE","MAPE")]
+```
+
+i) Para o melhor método STL, obtenha as previsões até ao final de 2023 usando os métodos que estudou antes.
+
+```{r}
+st.7 <- seasonal(stl.7.FR)
+
+at.7 <- seasadj(stl.7.FR)
+```
+
+```{r}
+snaive.st.7 <- snaive(st.7, h)$mean
+
+###
+meanf.at.7 <- meanf(at.7, h)$mean
+naive.at.7 <- naive(at.7, h)$mean
+drift.at.7 <- rwf(at.7, h, drift = TRUE)$mean
+```
+
+```{r}
+prev.7.meanf <- snaive.st.7 + meanf.at.7
+prev.7.naive <- snaive.st.7 + naive.at.7
+prev.7.drift <- snaive.st.7 + drift.at.7
+```
+
+```{r}
+accuracy(prev.7.meanf, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.naive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.drift, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+
+j) Represente graficamente a série temporal ts.FR e as previsões pontuais obtidas nas alíneas g) e i).
+
+```{r}
+autoplot(ts.FR)+
+  autolayer(prev.naive.sanaive)+
+  autolayer(prev.7.naive)
+```
+
+k) Em qual dos conjuntos de previsões obtidas anteriormente podemos confiar? Justifique e fundamente o mais possível a sua resposta.
+
+```{r}
+accuracy(prev.naive.sanaive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.naive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+```{r}
+checkresiduals(stl.7.FR$time.series[,"remainder"])
+```
+
+```{r}
+checkresiduals(ajust.decM)
+```
+
+
+9) O ficheiro elec_ES.xlxs contém o consumo mensal (Gigawatt/hora) de eletricidade em Espanha desde janeiro de 2008. Se necessário, considere α = 5%.
+
+a) Separe os dados em elecES.treino e elecES.teste, onde o teste é constituído pelos últimos 12 meses.
+
+```{r}
+ts.ES <- ts(elec_ES$ES, start = c(2008,1), frequency = 12)
+```
+
+```{r}
+autoplot(ts.ES)
+```
+
+```{r}
+di <- length(ts.ES)
+h <- 12
+
+elecES.treino <- ts(ts.ES[1:(di-h)], frequency = 12, start = start(ts.ES))
+
+elecES.teste <- ts(ts.ES[(di-h+1):di], frequency = 12, end = end(ts.ES))
+```
+
+b) Utilize os métodos de previsão simples para obter previsões h = 12 para os dados de treino.
+
+```{r}
+ES.fmean <- meanf(elecES.treino,h=12)$mean
+ES.naive <- naive(elecES.treino,h=12)$mean
+ES.snaive <- snaive(elecES.treino,h=12)$mean
+ES.drift <- rwf(elecES.treino,h=12,drift = TRUE)$mean
+```
+
+```{r}
+autoplot(ts.ES)+
+  autolayer(ES.fmean)+
+  autolayer(ES.naive)+
+  autolayer(ES.snaive)+
+  autolayer(ES.drift)
+```
+
+c) Utilize a decomposição clássica para decompor a série temporal de treino e obter previsões h = 12.
+
+```{r}
+decA.ES<-decompose(elecES.treino)
+decM.ES<-decompose(elecES.treino, type = "mult")
+```
+
+```{r}
+ajust.decA.ES<-elecES.treino-remainder(decA.ES)
+ajust.decM.ES<-elecES.treino/remainder(decM.ES)
+```
+
+```{r}
+accuracy(ajust.decA.ES, elecES.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajust.decM.ES, elecES.treino)[,c("MAE","RMSE","MAPE")]
+```
+```{r}
+st <- decM.ES$seasonal
+at <- seasadj(decM.ES)
+```
+
+```{r}
+prev.snaive.ES <- snaive(st, h)$mean
+```
+
+```{r}
+prev.meanf.ES <- meanf(at.ES, h)$mean
+
+prev.naive.ES <- naive(at.ES, h)$mean
+
+prev.drift.ES <- rwf(at.ES, h, drift = TRUE)$mean
+```
+
+```{r}
+prev.meanf.sanaive.ES <- prev.st.ES * prev.meanf.ES
+prev.naive.sanaive.ES <- prev.st.ES * prev.naive.ES
+prev.drift.sanaive.ES <- prev.st.ES * prev.drift.ES
+```
+
+```{r}
+accuracy(prev.meanf.sanaive.ES, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.naive.sanaive.ES, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.drift.sanaive.ES, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+
+d) Utilize a decomposição de Loess, com s.window = “periodic”, “9” e “16”, para decompor a série temporal de treino e obter previsões h = 12.
+
+```{r}
+rob <- test.Outliers.STL(elecES.treino)
+stl.peri.ES <- stl(elecES.treino, s.window = "periodic", robust = rob)
+
+stl.9.ES <- stl(elecES.treino, s.window = 9, robust = rob)
+
+stl.16.ES <- stl(elecES.treino, s.window = 16, robust = rob)
+```
+
+```{r}
+ajuste.peri.ES <- elecES.treino-remainder(stl.peri.ES)
+ajuste.9 <- elecES.treino-remainder(stl.9.ES)
+ajuste.16 <- elecES.treino-remainder(stl.16.ES)
+```
+
+```{r}
+accuracy(ajuste.peri, elecES.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajuste.9, elecES.treino)[,c("MAE","RMSE","MAPE")]
+accuracy(ajuste.16, elecES.treino)[,c("MAE","RMSE","MAPE")]
+```
+```{r}
+st.9 <- seasonal(stl.7.FR)
+
+at.9 <- seasadj(stl.7.FR)
+```
+
+```{r}
+snaive.st.7 <- snaive(st.7, h)$mean
+
+###
+meanf.at.7 <- meanf(at.7, h)$mean
+naive.at.7 <- naive(at.7, h)$mean
+drift.at.7 <- rwf(at.7, h, drift = TRUE)$mean
+```
+
+```{r}
+prev.7.meanf <- snaive.st.7 + meanf.at.7
+prev.7.naive <- snaive.st.7 + naive.at.7
+prev.7.drift <- snaive.st.7 + drift.at.7
+```
+
+```{r}
+accuracy(prev.7.meanf, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.naive, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(prev.7.drift, elecFR.teste)[,c("MAE","RMSE","MAPE")]
+```
+
+/* e) Utilize a função stl.fit() disponível no GitHub para decompor a série temporal e obtenha as previsões h = 12, com os métodos de previsão simples. */
+
+
+
+f) Avalie a qualidade das previsões através das habituais medidas de erro. Comente.
+
+
+
+g) Averigue se as melhores previsões foram provenientes do melhor ajustamento. Comente.
+
+```{r}
+accuracy(ajust.decM.ES, elecES.treino)
+accuracy(ajuste.peri, elecES.treino)
+accuracy(ajuste.9, elecES.treino)
+accuracy(ajuste.16, elecES.treino)
+```
+
+
+h) Avalie se os resíduos do ajustamento com o qual se obteve as melhores medidas de erro são ruído branco.
+
+```{r}
+checkresiduals(ajuste.9)
+```
+

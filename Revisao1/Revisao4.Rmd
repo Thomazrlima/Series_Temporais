@@ -96,6 +96,9 @@ tamnho
 ```{r}
 dj.treino = window(dowjones, end = 61)
 dj.teste = window(dowjones, start = 61)
+
+length(dj.treino)
+length(dj.teste)
 ```
 
 ```{r}
@@ -276,6 +279,7 @@ natgas.adt.fit<-ts.gas-remainder(natgas.adt)
 
 accuracy(natgas.adt.fit, ts.gas)[,c("MAE", "RMSE","MAPE")]
 ```
+
 ```{r}
 natgas.mul<-decompose(ts.gas, type="mult")
 natgas.mul.fit<-ts.gas/remainder(natgas.mul)

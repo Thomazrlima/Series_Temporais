@@ -754,6 +754,10 @@ h <- 24
 elecFR.treino <- ts(ts.FR[1:(di-h)], frequency = 12, start = start(ts.FR))
 
 elecFR.teste <- ts(ts.FR[(di-h+1):di], frequency = 12, end = end(ts.FR))
+
+length(ts.FR)
+length(elecFR.treino)
+length(elecFR.teste)
 ```
 
 e)
