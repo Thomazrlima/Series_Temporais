@@ -1,0 +1,565 @@
+---
+title: "Revisao3"
+output: html_document
+---
+
+---
+title: "Markdown2"
+output: html_document
+---
+
+# Lista 5
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp2)
+library(ggplot2)
+library(tseries)
+load("C:/PENTES/Series_Temporais/aula1.RData")
+```
+
+1) Considere os dados eggs (package: fma) que contém o preço de uma dúzia de ovos nos Estados Unidos desde 1900 até 1993.
+
+a) Ajuste SES e o método de Holt para prever os dados com h = 100.
+
+```{r}
+eggs.ses <- ses(eggs, h=100)
+eggs.holt <- holt(eggs, h=100)
+```
+
+```{r}
+autoplot(eggs, series = "eggs") +
+  autolayer(eggs.ses$fitted, series = "SES Forecast")+
+  autolayer(eggs.holt$fitted, series = "HOLT Forecast")
+```
+
+b) Qual dos métodos dá o melhor valor de RMSE no conjunto de treino?
+
+```{r}
+accuracy(eggs.ses)[, c("RMSE")]
+accuracy(eggs.holt)[, c("RMSE")]
+```
+A diferença entre os dois é marginal, mas com uma ligeira vantagem ao SES
+
+c) Represente as previsões graficamente e comente.
+
+```{r}
+autoplot(eggs)+
+  autolayer(eggs.ses$mean)+
+  autolayer(eggs.holt$mean)
+```
+
+d) Os resíduos do método mais adequado assemelham-se ao ruído branco?
+
+```{r}
+checkresiduals(eggs.ses$residuals)
+```
+Como o p-valor = 0.3999 > 0.05, não rejeitamos H₀
+
+
+2) Aplique os métodos Holt-Winters multiplicativo com tendência linear e amortecida aos dados gas (package: forecast).
+
+```{r}
+autoplot(gas)
+```
+
+a) Porque é necessária uma sazonalidade multiplicativa aqui?
+
+Porque a Amplitude sazonal aumenta conforme o crescimento da tendência
+
+b) Qual é o método que conduz ao melhor ajustamento com base nas medidas de erro MAE, RMSE, MAPE.
+
+```{r}
+# Holt-Winters com tendência linear (sem amortecimento)
+fit.hw.linear <- hw(gas, seasonal = "multiplicative", damped = FALSE)
+
+# Holt-Winters com tendência amortecida
+fit.hw.damped <- hw(gas, seasonal = "multiplicative", damped = TRUE)
+
+accuracy(fit.hw.linear)[, c("MAE", "RMSE", "MAPE")]
+accuracy(fit.hw.damped)[, c("MAE", "RMSE", "MAPE")]
+```
+
+Levando em conta as 3 medidas de erro, o melhor método é o com a Tendêcia Amortecida, em todas
+
+c) Verifique se os resíduos são ruído branco para o melhor ajustamento da alínea anterior.
+
+```{r}
+checkresiduals(fit.hw.damped$residuals)
+```
+
+Ainda é possível observar sazonalidade, além de que p-value é menor que 0.05, logo a hipótese nula está descartada 
+
+d) Que outras alternativas podia experimentar? Aplique-as, selecione o melhor ajustamento e averigue se os resíduos são ruído branco. Comente os resultados.
+
+```{r}
+fit.ets <- ets(gas)
+fit.arima <- auto.arima(gas)
+
+accuracy(fit.ets)[, c("MAE", "RMSE", "MAPE")]
+accuracy(fit.arima)[, c("MAE", "RMSE", "MAPE")]
+```
+
+Das medidas alternativas, o ideal seria o ETS
+
+```{r}
+checkresiduals(fit.ets)
+```
+
+Também não é possível confiar nessas previsões pois a ipótese nula não é válida
+
+e) Conside agora a série gas somente a partir de 1970. Repita a alínea b e represente graficamente as previsões.
+
+```{r}
+gas1970 <- window(gas, start = 1970)
+
+# Ajuste novamente
+fit.hw.linear.70 <- hw(gas1970, seasonal = "multiplicative", damped = FALSE)
+fit.hw.damped.70 <- hw(gas1970, seasonal = "multiplicative", damped = TRUE)
+
+accuracy(fit.hw.linear.70)[, c("MAE", "RMSE", "MAPE")]
+accuracy(fit.hw.damped.70)[, c("MAE", "RMSE", "MAPE")]
+```
+```{r}
+checkresiduals(fit.hw.damped.70$residuals)
+```
+
+A hipótese nula não pode ser descartada
+
+```{r}
+autoplot(gas.1970)+
+  autolayer(fit.hw.damped.70$fitted)
+```
+
+3) Os dados books (package: fma) contém as vendas diárias de livros de capa dura e de capa normal de uma mesma loja. A tarefa consiste em prever os próximos quatro dias de vendas de livros de capa dura e de capa normal.
+
+a) Represente os dados graficamente e comente.
+
+```{r}
+autoplot(books)
+```
+
+b) Use a função ses para prever cada uma das séries temporais, e represente os dados graficamente.
+
+```{r}
+paper.ses <- ses(books[,c("Paperback")], h=4)
+
+hard.ses <- ses(books[,c("Hardcover")], h=4)
+```
+
+```{r}
+autoplot(books[,c("Paperback")], h=4)+
+  autolayer(paper.ses$mean)
+```
+
+```{r}
+autoplot(books[,c("Hardcover")], h=4)+
+  autolayer(hard.ses$mean)
+```
+
+c) Calcular os valores RMSE para os dados de treino em cada caso.
+
+```{r}
+accuracy(paper.ses$fitted, books[,c("Paperback")])[,c("RMSE")]
+accuracy(hard.ses$fitted, books[,c("Hardcover")])[,c("RMSE")]
+```
+
+d) Agora aplique o método linear de Holt e Holt com tendência amortecida ao cada caso, Paperback e Hardback, e determine as previsões de quatro dias em cada caso.
+
+```{r}
+paper.holt <- holt(books[,c("Paperback")], h=4, damped = FALSE)
+paper.holtD <- holt(books[,c("Paperback")], h=4, damped = TRUE)
+```
+
+```{r}
+hard.holt <- holt(books[,c("Hardcover")], h=4, damped = FALSE)
+hard.holtD <- holt(books[,c("Hardcover")], h=4, damped = TRUE)
+```
+
+e) Compare as medidas RMSE do método de Holt linear e Holt com tendência amortecida para as duas séries com as obtidas em c). Comente.
+
+```{r}
+accuracy(paper.ses$fitted, books[,c("Paperback")])[,c("RMSE")]
+accuracy(paper.holt$fitted, books[,c("Paperback")])[,c("RMSE")]
+accuracy(paper.holtD$fitted, books[,c("Paperback")])[,c("RMSE")]
+```
+Para o PaperBack o ideal seria escolher o holt sem tendência amortecida
+
+```{r}
+accuracy(hard.ses$fitted, books[,c("Hardcover")])[,c("RMSE")]
+accuracy(hard.holt$fitted, books[,c("Hardcover")])[,c("RMSE")]
+accuracy(hard.holtD$fitted, books[,c("Hardcover")])[,c("RMSE")]
+```
+Já para o Hardcover, por outro lado, o ideal seria o modelo holt com tendência amortecida
+
+f) Comparar as previsões para as duas séries usando ambos os métodos. Qual acha que é o melhor? Considere α = 1%.
+
+```{r}
+checkresiduals(paper.holt)
+```
+
+```{r}
+checkresiduals(paper.holtD)
+```
+
+```{r}
+checkresiduals(hard.holt)
+```
+
+```{r}
+checkresiduals(hard.holtD)
+```
+
+Em nenhum dos casos a hipótese nula pode ser desconsiderada
+
+```{r}
+autoplot(books[,c("Paperback")], series = "Paperback")+
+  autolayer(paper.ses$mean)+
+  autolayer(paper.holt$mean)+
+  autolayer(paper.holtD$mean)
+```
+
+```{r}
+autoplot(books[,c("Hardcover")], series = "Hardcover")+
+  autolayer(hard.ses$mean)+
+  autolayer(hard.holt$mean)+
+  autolayer(hard.holtD$mean)
+```
+
+4) Os dados ukcars (package: expsmooth) contém a produção trimestral de veículos de passageiros na Inglaterra entre Q1-1977 até Q1- 2005.
+
+a) Represente os dados graficamente e comente. Qual o trimestre em que se observa um decréscimo na produção trimestral?
+
+```{r}
+autoplot(ukcars)
+```
+
+```{r}
+ggseasonplot(ukcars)
+```
+
+Com base nos gráficos podemos observar que o 3° trimestre é o que apresenta uma queda na produção de carros
+
+b) Use o método STL para decompor a série temporal e remova a sazonalidade (y∗).
+
+```{r}
+rob <- test.Outliers.STL(ukcars)
+stl.ukcars <- stl(ukcars, robust = rob, s.window = "periodic")
+stl.ukcars.ss <- seasadj(stl.ukcars)
+
+autoplot(stl.ukcars.ss)
+```
+
+c) Obtenha as previsões para os próximos dois anos da série y∗ utilizando o método de Holt com tendência amortecida. (Isto pode ser feito num passo utilizando a função stlf com argumentos etsmodel="AAN", damped=TRUE).
+
+```{r}
+stl.ukcars.prev <- holt(stl.ukcars.ss, damped = TRUE, h=8)
+
+stl.ukcars.prev.2 <- stlf(ukcars, robust = TRUE, h=8, etsmodel = "AAN", damped = TRUE, s.window = TRUE)
+```
+
+d) Obtenha as previsões para os próximos dois anos da série y ∗ utilizando o método de Holt.
+
+```{r}
+stl.ukcars.prev.holt <- holt(stl.ukcars.ss, h=8)
+```
+
+
+e) Compare os valores de RMSE para avaliar o ajustamento dos métodos em c) e d). Qual deles dá o melhor ajuste para os dados.
+
+```{r}
+accuracy(stl.ukcars.prev)[,c("RMSE")]
+accuracy(stl.ukcars.prev.holt)[,c("RMSE")]
+accuracy(stl.ukcars.prev.2)[,c("RMSE")]
+```
+Segundo o RMSE o método mais adequado para essa situação é o STLF com modelo ETS = AAN
+
+f) Verifique se os resíduos são ruído branco.
+
+```{r}
+checkresiduals(stl.ukcars.prev.2)
+```
+
+Segundo a análise, não podemos desconsiderar a hipótese nula. 
+
+5) Considere os dados visitors (package: expsmooth).
+
+a) Represente os dados graficamente e comente.
+
+```{r}
+autoplot(visitors)
+```
+
+É uma série com uma tendência bastante demarcada e com uma sazonalidade protuberante
+
+b) Separe os dados em conjunto de treino e conjunto de teste, este último contém os últimos dois anos. Obtenha as previsões para o conjunto de teste utilizando o método multiplicativo de Holt-Winters com tendência linear e amortecida.
+
+```{r}
+tail(visitors)
+n <- length(visitors)
+treino <- window(visitors, end = c(2003, 4))
+teste <- window(visitors, start = c(2003, 5))
+```
+
+```{r}
+prev.hwM <- hw(treino, h = 24)
+prev.hwMA <- hw(treino, h = 24, damped = TRUE)
+```
+
+
+c) Porque é necessária uma sazonalidade multiplicativa aqui?
+
+Porque a amplitude sazonal aumenta conftome o aumento da tendência
+
+d) Efetue as previsões para dois anos utilizando o método seasonal naïve.
+
+```{r}
+snaive.visi <- snaive(treino, h=24)
+```
+
+e) Qual o método que dá as melhores previsões, com base nas medidas de erro MAE, RMSE e MAPE? Passa no teste de avaliação aos residuos, isto é, será que são ruído branco?
+
+```{r}
+autoplot(treino) +
+  autolayer(prev.hwMA, series = "Previsão (HW amortecido)", PI = FALSE) +
+  autolayer(teste, series = "Dados reais") +
+  labs(title = "Previsões com Holt-Winters Amortecido",
+       x = "Ano",
+       y = "Visitantes") +
+  scale_colour_manual(values = c("blue", "red", "black")) +
+  guides(colour = guide_legend(title = "Séries"))
+
+```
+
+```{r}
+accuracy(prev.hwM$mean, teste)[, c("RMSE", "MAE", "MAPE")]
+accuracy(prev.hwMA$mean, teste)[, c("RMSE", "MAE", "MAPE")]
+accuracy(snaive.visi$mean, teste)[, c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro o modelo mais adequado é a previsão com Snaive
+
+```{r}
+checkresiduals(snaive.visi$mean)
+```
+
+Não podemos descartar a hipótese nula
+
+6) Compare ets, snaive e stlf para as seguintes séries temporais ausbeer, bricksq, dole, a10, h02, usmelec. Para stlf, use a transformação Box-Cox, quando necessária. Use um conjunto de teste de 3 anos para encontrar as melhores previsões com base na medida de erro RMSE.
+
+ausbeer
+
+```{r}
+tail(ausbeer)
+ausbeer.treino <- window(ausbeer, end = c(2007,2))
+ausbeer.teste <- window(ausbeer, start = c(2007,3))
+length(ausbeer.teste)
+```
+
+```{r}
+ausbeer.ets <- forecast(ets(ausbeer.treino), h = 12)$mean
+ausbeer.snaive <- snaive(ausbeer.treino, h=12)$mean
+rob <- test.Outliers.STL(ausbeer.treino)
+ausbeer.bc.stlf <- stlf(ausbeer.treino, robust = rob, s.window = "peri", lambda = "auto", h = 12)$mean
+ausbeer.stlf <- stlf(ausbeer.treino, robust = rob, s.window = "peri", h = 12)$mean
+```
+
+```{r}
+accuracy(ausbeer.ets, ausbeer.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(ausbeer.snaive, ausbeer.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(ausbeer.stlf, ausbeer.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(ausbeer.bc.stlf, ausbeer.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+bricksq
+```{r}
+tail(bricksq)
+bricksq.treino <- window(bricksq, end = c(1991,3))
+bricksq.teste <- window(bricksq, start = c(1991,4))
+length(bricksq.teste)
+```
+
+```{r}
+bricksq.ets <- forecast(ets(bricksq.treino), h = 12)$mean
+bricksq.snaive <- snaive(bricksq.treino, h = 12)$mean
+rob <- test.Outliers.STL(bricksq.treino)
+bricksq.stlf <- stlf(bricksq.treino, robust = rob, s.window = "peri", h = 12)$mean
+bricksq.stlf.bc <- stlf(bricksq.treino, robust = rob, s.window = "peri", lambda = "auto", h = 12)$mean
+```
+
+```{r}
+accuracy(bricksq.ets, bricksq.teste)[,c("RMSE")]
+accuracy(bricksq.snaive, bricksq.teste)[,c("RMSE")]
+accuracy(bricksq.stlf, bricksq.teste)[,c("RMSE")]
+accuracy(bricksq.stlf.bc, bricksq.teste)[,c("RMSE")]
+```
+
+dole
+
+```{r}
+tail(dole)
+dole.treino <- window(dole, end = c(1989,7))
+dole.teste <- window(dole, start = c(1989,8))
+length(dole.teste)
+```
+
+```{r}
+dole.ets <- forecast(ets(dole.treino), h = 36)$mean
+rob <- test.Outliers.STL(dole.treino)
+dole.stlf <- stlf(dole.treino, robust = rob, s.window = "peri", h = 36)$mean
+dole.stlf.bc <- stlf(dole.treino, robust = rob, s.window = "peri", lambda = "auto", h = 36)$mean
+```
+
+```{r}
+accuracy(dole.ets, dole.teste)[,c("RMSE")]
+accuracy(dole.stlf, dole.teste)[,c("RMSE")]
+accuracy(dole.stlf.bc, dole.teste)[,c("RMSE")]
+```
+
+a10
+
+```{r}
+tail(a10)
+dole.treino <- window(a10, end = c(2005,6))
+dole.teste <- window(a10, start = c(2005,7))
+length(a10.teste)
+```
+
+```{r}
+a10.ets <- forecast(ets(a10.treino), h = 36)$mean
+a10.snaive <- snaive(a10.treino, h = 36)$mean
+rob <- test.Outliers.STL(a10.treino)
+a10.stlf <- stlf(a10.treino, robust = rob, s.window = "peri", h = 36)$mean
+a10.stlf.bc <- stlf(a10.treino, robust = rob, s.window = "peri", lambda = "auto", h = 36)$mean
+```
+
+```{r}
+accuracy(a10.ets, a10.teste)[,c("RMSE")]
+accuracy(a10.snaive, a10.teste)[,c("RMSE")]
+accuracy(a10.stlf, a10.teste)[,c("RMSE")]
+accuracy(a10.stlf.bc, a10.teste)[,c("RMSE")]
+```
+
+h02
+
+```{r}
+tail(h02)
+h02.treino <- window(a10, end = c(2005,6))
+h02.teste <- window(a10, start = c(2005,7))
+length(h02.teste)
+```
+
+```{r}
+h02.ets <- forecast(ets(h02.treino), h = 36)$mean
+h02.snaive <- snaive(h02.treino, h = 36)$mean
+rob <- test.Outliers.STL(h02.treino)
+h02.stlf <- stlf(h02.treino, robust = rob, s.window = "peri", h = 36)$mean
+h02.stlf.bc <- stlf(h02.treino, robust = rob, s.window = "peri", lambda = "auto", h = 36)$mean
+```
+
+```{r}
+accuracy(h02.ets, h02.teste)[,c("RMSE")]
+accuracy(h02.snaive, h02.teste)[,c("RMSE")]
+accuracy(h02.stlf, h02.teste)[,c("RMSE")]
+accuracy(h02.stlf.bc, h02.teste)[,c("RMSE")]
+```
+
+usmelec
+
+```{r}
+tail(usmelec)
+usmelec.treino <- window(usmelec, end = c(2010,6))
+usmelec.teste <- window(usmelec, start = c(2010,7))
+length(usmelec.teste)
+```
+
+```{r}
+usmelec.ets <- forecast(ets(usmelec.treino), h = 36)$mean
+usmelec.snaive <- snaive(usmelec.treino, h = 36)$mean
+rob <- test.Outliers.STL(usmelec.treino)
+usmelec.stlf <- stlf(usmelec.treino, robust = rob, s.window = "peri", h = 36)$mean
+usmelec.stlf.bc <- stlf(usmelec.treino, robust = rob, s.window = "peri", lambda = "auto", h = 36)$mean
+```
+
+```{r}
+accuracy(usmelec.ets, usmelec.teste)[,c("RMSE")]
+accuracy(usmelec.snaive, usmelec.teste)[,c("RMSE")]
+accuracy(usmelec.stlf, usmelec.teste)[,c("RMSE")]
+accuracy(usmelec.stlf.bc, usmelec.teste)[,c("RMSE")]
+```
+
+7) Considere os dados usmelec (package: fpp2), que contém a produção mensal de electricidade (em mil milhões de kilowatts-hora). Se necessário considere α = 5%.
+
+a) Separe os últimos 6 meses e coloque-os num objecto designado por us.teste. Os restantes coloque em us.treino.
+
+```{r}
+tail(usmelec)
+us.treino <- window(usmelec, end = c(2012,12))
+us.teste <- window(usmelec, start = c(2013,1))
+length(us.teste)
+```
+
+b) Represente graficamente os dados de treino e de teste.
+
+```{r}
+autoplot(us.treino)+
+  autolayer(us.teste)
+```
+
+c) Estime e aplique uma transformação box-cox aos dados de treino. Designe os dados transformados por us.bc e represente graficamente.
+
+```{r}
+us.lam <- BoxCox.lambda(us.treino)
+
+us.bc <- BoxCox(us.treino, lambda = us.lam)
+```
+
+```{r}
+autoplot(us.bc)
+```
+
+d) Aplique uma transformação logarítmica de base e aos dados de treino e atribua a designação us.log.
+
+```{r}
+us.log <- BoxCox(us.treino, lambda = 0)
+```
+
+
+e) Usando a função ets(), ajuste um modelo de alisamento exponencial às series us.treino, us.bc e us.log.
+
+```{r}
+ets.treino <- ets(us.treino)
+ets.bc <- ets(us.bc)
+ets.log <- ets(us.log)
+```
+
+
+f) Para cada um dos modelos anteriores da alínea anterior, obtenha as previsões pontuais para 6 meses. Represente graficamente us.train e estas previsões.
+
+```{r}
+fore.treino <- forecast(ets.treino, h)$mean
+```
+
+```{r}
+fore.bc <- forecast(ets.bc, h, lambda = us.lam)$mean
+```
+
+```{r}
+fore.log <- forecast(ets.log, h, lambda = 0)$mean
+```
+
+```{r}
+autoplot(us.treino)+
+  autolayer(fore.treino)+
+  autolayer(fore.log)+
+  autolayer(fore.bc)
+```
+
+
+g) Com base na alínea anterior, utilize a medida RMSE para avaliar a qualidade das previsões obtidas para os 3 modelos. Qual foi o melhor modelo? Justifique e comente fazendo referência às transformações utilizadas anteriormente.
+
+```{r}
+accuracy(fore.treino, us.teste)[,c("RMSE")]
+accuracy(fore.bc, us.teste)[,c("RMSE")]
+accuracy(fore.log, us.teste)[,c("RMSE")]
+```
+

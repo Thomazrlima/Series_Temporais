@@ -1,0 +1,557 @@
+---
+title: "**Resolução dos exercícios**"
+author: "nome"
+fontsize: 14pt
+output: pdf_document
+#output: word_document
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp2)
+library(ggplot2)
+library(tseries)
+```
+
+
+
+
+# Questão 1
+
+## a)
+
+```{r}
+autoplot(eggs)
+```
+Não temos sazonalidade mas temos uma tendencia de decrescente
+
+-ajustar o *SES()*
+
+```{r}
+eggs.ses <- ses(eggs, h=100)
+summary(eggs.ses)
+```
+Observar o ajustamento do *simple exponential smoothing*
+```{r}
+autoplot(eggs.ses$fitted, series = "ses.eggs") + autolayer(eggs)
+```
+Podemos ver que é a mesma serie so que desfazada numa so unidade
+
+```{r}
+autoplot(eggs.ses$mean) + autolayer(eggs)
+```
+ ajustar o metodo de holt(utilizado para series com tendencia)
+ 
+```{r}
+eggs.holt <- holt(eggs, h = 100)
+summary(eggs.holt)
+```
+ 
+Com base nas medidas *RMSE*, *MAE* , *MAPE* o melhor ajustamento é o método de Holt.
+
+Observar o ajustamento de holt
+```{r}
+autoplot(eggs, col = "black") + autolayer(eggs.holt$fitted, series = "HOLT") + autolayer(eggs.ses$fitted, series = "SES")
+
+```
+
+```{r}
+autoplot(eggs) + autolayer(eggs.ses$mean) + autolayer(eggs.holt$mean)
+```
+
+b) 
+
+de acordo com a RMSE, o melhor método é o SES por obter um menor valor de RMSE = 26,56395
+
+c) 
+As previsoes foram todas feitas na alinea a). A logaritmica seria a melhor neste caso pois no holt nao faz sentido existir preços negativos para os ovos.logo entre as duas seria a SES.
+
+d) 
+```{r}
+checkresiduals(eggs.ses$residuals)
+```
+
+Sabemos que é ruido branco pelo grafico dado (canto inferior à esquerda). Que é fortificado pelo teste d e3ljung-box pois tem um p-value acentuado e se utilizarmos alpha = 0.05 sabemos que rejeita a hipotese nula, logo é sim ruido branco.
+
+## exercicio 3
+
+```{r}
+autoplot(books)
+```
+
+Nao tem sazonalidade mas tem os dois uma tendencia crescente.
+
+b)
+
+```{r}
+paper.ses <- ses(books[,c("Paperback")], h=4)
+
+Hard.ses <- ses(books[,c("Hardcover")], h=4)
+```
+
+```{r}
+autoplot(books[,c("Paperback")], series ="Paperback") + autolayer(paper.ses$mean)
+```
+
+```{r}
+autoplot(books[,c("Hardcover")], series ="hardcover") + autolayer(Hard.ses$mean)
+```
+
+
+c)
+```{r}
+summary(paper.ses) #RMSE = 33.63769
+summary(Hard.ses) #RMSE = 31.93101
+```
+
+d) 
+```{r}
+paper.holt <- holt(books[,c("Paperback")], h=4)
+
+Hard.holt <- holt(books[,c("Hardcover")], h=4)
+```
+
+```{r}
+paper.holtD <- holt(books[,c("Paperback")], h=4, damped = TRUE)
+
+Hard.holtD <- holt(books[,c("Hardcover")], h=4, damped = TRUE)
+```
+
+e)
+**Paperback**
+
+```{r}
+accuracy(paper.ses$fitted, books[,c("Paperback")])[,c("RMSE")]
+
+accuracy(paper.holt$fitted, books[,c("Paperback")])[,c("RMSE")] #melhor
+
+accuracy(paper.holtD$fitted, books[,c("Paperback")])[,c("RMSE")]
+```
+
+***HArdcover***
+
+```{r}
+accuracy(Hard.ses$fitted, books[,c("Hardcover")])[,c("RMSE")]
+
+accuracy(Hard.holt$fitted, books[,c("Hardcover")])[,c("RMSE")]
+
+accuracy(Hard.holtD$fitted, books[,c("Hardcover")])[,c("RMSE")] #melhor
+```
+
+f)
+
+```{r}
+autoplot(books[,c("Paperback")], series ="Paperback")+
+   autolayer(paper.ses$mean, series="SES")+
+   autolayer(paper.holt$mean,series = "Holt")+
+   autolayer(paper.holtD$mean, series = "Holt Damped")
+```
+
+```{r}
+autoplot(books[,c("Hardcover")], series ="Hardcover")+
+   autolayer(Hard.ses$mean, series="SES")+
+   autolayer(Hard.holt$mean,series = "Holt")+
+   autolayer(Hard.holtD$mean, series = "Holt Damped")
+```
+### exercicio 2
+
+```{r}
+autoplot(gas)
+```
+É necessario usar a multiplicativa , porque a sazonalidade está a aumentar com a tendencia
+
+b)
+
+
+```{r}
+gas.hw.M <- hw(gas, seasonal = ("multiplicative"))
+gas.hwD.M <- hw(gas,damped = TRUE, seasonal = ("multiplicative"))
+autoplot(gas) + autolayer(gas.hw.M$fitted) + autolayer(gas.hwD.M$fitted)
+```
+Nao da para ver graficamente, teremos de usar accuracy para ver qual deles e o melhor
+
+```{r}
+accuracy(gas.hw.M)
+accuracy(gas.hwD.M) #melhor ajustamento.ISTO È DOS RESIDUOS POIS NAO TEMOS PREVISÔES
+#so usamos o RMSE, MAE, MAPE
+```
+
+c)
+
+```{r}
+checkresiduals(gas.hwD.M)
+```
+Não é ruido branco, pois p-value é muito baixo no teste de ljung-box, podemos ver nos residous(primeiro grafico) Alguma sazonalidade também, passa das linhas azuis tambem no segundo gráfico.
+
+d)
+
+Vamos transformar os dados através da transformação box-cox.
+quando usamos box-cox já nao sera multiplicativo.
+
+```{r}
+bc.gas.hw <- hw(gas,lambda = "auto")
+bc.gas.hwD <- hw(gas,damped = TRUE,lambda = "auto")
+```
+```{r}
+accuracy(bc.gas.hw)
+accuracy(bc.gas.hwD) #melhor se usarmos MAPE, RMSE, MAE
+```
+```{r}
+checkresiduals(bc.gas.hwD)
+```
+Continua a não ser ruido branco
+
+e)
+
+```{r}
+head(gas)
+gas.70s <- window(gas, start=c(1970,1),frequency =12)
+head(gas.70s)
+```
+repetir a alinea b)
+
+```{r}
+gas70s.hw.M <- hw(gas.70s, seasonal = ("multiplicative"))
+gas70s.hwD.M <- hw(gas.70s,damped = TRUE, seasonal = ("multiplicative"))
+autoplot(gas.70s) + autolayer(gas70s.hw.M$fitted) + autolayer(gas70s.hwD.M$fitted)
+```
+```{r}
+accuracy(gas70s.hw.M)
+accuracy(gas70s.hwD.M) #melhor
+```
+
+```{r}
+checkresiduals(gas70s.hwD.M)
+```
+O melhor ajustamento continua a ser o holt winter damped sendo agora ruido branco, pois tem um p-value alto , o primeiro grafico nao mostra tanta sazonalidade e o segundo grafico nao passa das linhas azuis.
+
+
+### exercicio 4
+
+a) 
+```{r}
+autoplot(ukcars)
+```
+Em geral tem uma tendencia crescente com sazonalidade.
+b)
+```{r}
+ggseasonplot(ukcars)
+```
+Atraves do gráfico podemos observar que é o 3 trimestre que tem uma descida na produção
+
+b)
+composição de loess
+```{r}
+rob <- test.Outliers.STL(ukcars)
+
+stl.ukcars <- stl(ukcars,robust = rob, s.window ="periodic") 
+#como nao nos diz nada aceitamos periodic no window
+#agora remover a sazonalidade
+stl.ukcars.ss <- seasadj(stl.ukcars)
+autoplot(stl.ukcars.ss)
+```
+c)
+```{r}
+#opcao 1, vamos fazer para o stl.ukcars com previsoes de h = 8 (2 anos em trimestres é 4x2)
+
+stl.ukcars.prev <- holt(stl.ukcars.ss,damped = TRUE, h = 8)
+
+stl.ukcars.prev$mean
+#opcao 2
+
+stl.ukcars.prev.2 <- stlf(stl.ukcars.ss,h = 8,robust = TRUE ,etsmodel = "AAN", damped= TRUE, s.window = "peri")
+
+stl.ukcars.prev.2$mean
+#dá uma ligeira diferença na terceira e quarta casa decimal
+```
+d)
+```{r}
+stl.ukcars.prev.holt <- holt(stl.ukcars.ss,h=8)
+```
+
+e)
+```{r}
+accuracy(stl.ukcars.prev.holt)[,c("RMSE")]
+accuracy(stl.ukcars.prev)[,c("RMSE")] #com tendencia amortecida é melhor
+```
+f)
+```{r}
+checkresiduals(stl.ukcars.prev)
+```
+Considerando um alpha igual a 0.01 acreditamos que seja ruido branco
+
+### 5
+
+a)
+```{r}
+autoplot(visitors)
+```
+Podemos ver uma grande tendencia crescente com sazonalidade
+
+b)
+```{r}
+h <- 24 #24 anos de dados
+n <- length(visitors)
+visitors.treino <- ts(visitors[1:(n-h)],start = start(visitors), frequency = frequency(visitors))
+
+visitors.teste <- ts(visitors[(n-h+1):n],frequency = frequency(visitors),end = end(visitors))
+```
+ver se teste e treino estao certos
+```{r}
+length(visitors.teste)
+length(visitors.treino)
+#fixe
+```
+
+PREVISOES(usa se treino para previsoes)
+```{r}
+visitors.hw <- hw(visitors.treino,h)
+
+#hw com damped = TRUE
+visitors.hwD <- hw(visitors.treino,damped = TRUE, h)
+```
+
+
+
+
+
+
+
+
+c)
+```{r}
+autoplot(visitors.treino)
+```
+Usamos multiplicativo pois temos uma tendencia crescente com sazonalidade.
+
+d)
+```{r}
+visitors.snaive <- snaive(visitors.treino,h =h)
+autoplot(visitors) + autolayer(visitors.snaive$mean)
+```
+
+e)
+```{r}
+accuracy(visitors.hw$mean,visitors.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(visitors.hwD$mean, visitors.teste)[,c("MAE","RMSE","MAPE")]
+accuracy(visitors.snaive$mean,visitors.teste)[,c("MAE","RMSE","MAPE")] #melhor
+```
+ver se é ruido branco o snaive
+```{r}
+checkresiduals(visitors.snaive)
+```
+Para qualquer tipo de alpha os nosso residuos não serão um ruido branco
+
+### exercicio 7
+
+alinea a)
+
+```{r}
+autoplot(usmelec) #sazonalidade e tendencia crescente (multiplicativa)
+```
+```{r}
+h <- 6 
+n <- length(usmelec)
+
+us.treino <- ts(usmelec[1:(n-h)],start = start(usmelec), frequency = frequency(usmelec))
+us.teste <- ts(usmelec[(n-h+1):n],end = end(usmelec), frequency = frequency(usmelec))
+```
+
+alinea b
+
+```{r}
+autoplot(us.treino) + autolayer(us.teste) 
+```
+
+alinea c)
+
+```{r}
+us.lam <- BoxCox.lambda(us.treino) #para obter o valor do parâmetro lambda
+#aplicar
+us.bc <- BoxCox(us.treino, lambda = us.lam)
+autoplot(us.bc) #estabilizou a amplitude que tinhamos antes (variabilidade diminuiu)
+```
+
+alinea d)
+
+```{r}
+us.log <- BoxCox(us.treino, lambda = 0)
+autoplot(us.log)
+```
+
+alinea e)
+
+```{r}
+ets.treino <- ets(us.treino)
+ets.bc <- ets(us.bc)
+ets.log <- ets(us.log)
+#nao podemos comparar os modelos porque são transformações diferentes
+```
+
+alinea f)
+
+```{r}
+#forcast
+fore.treino <- forecast(ets.treino,h)$mean
+
+fore.bc <- forecast(ets.bc,h, lambda = us.lam)$mean
+
+fore.log <- forecast(ets.log,h,lambda = 0)$mean
+```
+```{r}
+autoplot(us.teste) + 
+  autolayer(fore.treino , series = "sem tranformacao") + 
+  autolayer(fore.log, series = "log") + 
+  autolayer(fore.bc, series = "bc") 
+```
+
+alinea g)
+
+```{r}
+accuracy(fore.treino, us.teste)[,c("RMSE")]
+accuracy(fore.bc, us.teste)[,c("RMSE")]
+accuracy(fore.log, us.teste)[,c("RMSE")] #melhor
+```
+
+###Exercicio 6
+
+**usmelec**
+
+```{r}
+f <- 36 # 3anos * 12meses
+n <- length(usmelec)
+
+us.treino36 <- ts(usmelec[1:(n-f)],start = start(usmelec), frequency = frequency(usmelec))
+us.teste36 <- ts(usmelec[(n-f+1):n],end = end(usmelec), frequency = frequency(usmelec))
+```
+
+ets() + snaive() + stlf()
+```{r}
+#ets()
+ets.us.36 <- ets(us.treino36)
+fore.ets.us.36 <- forecast(ets.us.36,f)$mean
+
+#snaive
+snai.us.36 <- snaive(us.treino36,f)$mean
+
+# stlf()
+rob = test.Outliers.STL(us.treino36)
+
+fore.stlf.us.36 <- stlf(us.treino36, robust = rob, s.window = "peri",f)$mean
+```
+
+```{r}
+accuracy(fore.ets.us.36, us.teste36)[,c("RMSE")] #melhor
+accuracy(snai.us.36, us.teste36)[,c("RMSE")]
+accuracy(fore.stlf.us.36, us.teste36)[,c("RMSE")]
+```
+- Dados: **Ausbeer**
+
+```{r}
+f <- 3* 4 #é trimestral logo 3 anos 4 trimestres cada
+n <- length(ausbeer)
+
+ausbeer.treino12 <- ts(ausbeer[1:(n-f)],start = start(ausbeer), frequency = frequency(ausbeer))
+ausbeer.teste12 <- ts(ausbeer[(n-f+1):n],end = end(ausbeer), frequency = frequency(ausbeer))
+
+autoplot(ausbeer) + autolayer(ausbeer.treino12)
+```
+
+```{r}
+#ets()
+ets.ausbeer.12 <- ets(ausbeer.treino12)
+fore.ets.ausbeer.12 <- forecast(ets.ausbeer.12,f)$mean
+
+#snaive podemos pois tem sazonalidade
+snai.ausbeer.12 <- snaive(ausbeer.treino12,f)$mean
+
+# stlf()
+robeer = test.Outliers.STL(ausbeer.treino12)
+
+fore.stlf.ausbeer.12 <- stlf(ausbeer.treino12, s.window = "peri", robust = robeer,f)$mean
+fore.stlf.bc.ausbeer.12 <- stlf(ausbeer.treino12, robust = robeer,lambda = "auto", s.window = "peri",f)$mean
+```
+
+```{r}
+accuracy(fore.ets.ausbeer.12, ausbeer.teste12)[,c("RMSE")] #melhor
+accuracy(snai.ausbeer.12, ausbeer.teste12)[,c("RMSE")]
+accuracy(fore.stlf.ausbeer.12, ausbeer.teste12)[,c("RMSE")]
+accuracy(fore.stlf.bc.ausbeer.12, ausbeer.teste12)[,c("RMSE")]
+```
+
+- Dados: **Bricksq**
+
+```{r}
+f <- 3 * 4
+n <- length(bricksq)
+
+bricksq.treino12 <- ts(bricksq[1:(n-f)],start = start(bricksq), frequency = frequency(bricksq))
+bricksq.teste12 <- ts(bricksq[(n-f+1):n],end = end(bricksq), frequency = frequency(bricksq))
+
+autoplot(bricksq) + autolayer(bricksq.treino12)
+```
+
+```{r}
+#ets()
+ets.bricksq.12 <- ets(bricksq.treino12)
+fore.ets.bricksq.12 <- forecast(ets.bricksq.12,f)$mean
+
+#snaive podemos pois tem sazonalidade
+snai.bricksq.12 <- snaive(bricksq.treino12,f)$mean
+
+# stlf()
+rob = test.Outliers.STL(bricksq.treino12)
+
+fore.stlf.bricksq.12 <- stlf(bricksq.treino12, s.window = "peri", robust = rob,f)$mean
+fore.stlf.bc.bricksq.12 <- stlf(bricksq.treino12, robust = robeer,lambda = "auto", s.window = "peri",f)$mean
+```
+
+```{r}
+accuracy(fore.ets.bricksq.12, bricksq.teste12)[,c("RMSE")] #melhor
+accuracy(snai.bricksq.12, bricksq.teste12)[,c("RMSE")]
+accuracy(fore.stlf.bricksq.12, bricksq.teste12)[,c("RMSE")]
+accuracy(fore.stlf.bc.bricksq.12, bricksq.teste12)[,c("RMSE")]
+```
+
+```{r}
+f <- 36 #meses
+n <- length(dole)
+
+dole.treino36 <- ts(dole[1:(n-f)],start = start(dole), frequency = frequency(dole))
+dole.teste36 <- ts(dole[(n-f+1):n],end = end(dole), frequency = frequency(dole))
+
+autoplot(dole) + autolayer(dole.treino36)
+```
+
+
+```{r}
+#ets()
+ets.dole.36 <- ets(dole.treino36)
+fore.ets.dole.36 <- forecast(ets.dole.36,f)$mean
+
+# stlf()
+rob = test.Outliers.STL(dole.treino36)
+
+fore.stlf.dole.36 <- stlf(dole.treino36, s.window = "peri", robust = rob,f)$mean
+fore.stlf.bc.dole.36 <- stlf(dole.treino36, robust = rob,lambda = "auto", s.window = "peri",f)$mean
+```
+
+```{r}
+accuracy(fore.ets.dole.36, dole.teste36)[,c("RMSE")] 
+accuracy(fore.stlf.dole.36, dole.teste36)[,c("RMSE")]
+accuracy(fore.stlf.bc.dole.36, dole.teste36)[,c("RMSE")] #melhor
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -288,5 +288,277 @@ accuracy(visi.snaive$mean, test.visi)[,c("MAE", "RMSE", "MAPE")]
 checkresiduals(visi.snaive)
 ```
 
+## Questão 6
+
+Ausbeer
+
+```{r}
+h <- 3*4
+y <- ausbeer
+n <- length(ausbeer)
+
+beer.treino <- ts(y[1:(n-h)], start = start(y), frequency=frequency(y))
+
+beer.teste <- ts(y[(n-h+1):n], end = end(y), frequency=frequency(y))
+```
+
+```{r}
+autoplot(beer.treino)+
+  autolayer(beer.teste)
+```
+
+```{r}
+#ets
+ets.beer.12<-ets(beer.treino)
+prev.ets.beer.12<-forecast(ets.beer.12,h)$mean
+
+#snaive
+snaive.beer.12<-snaive(beer.treino,h)$mean
+
+#stlf
+rob <- test.Outliers.STL(beer.treino)
+stlf.beer.12<-stlf(beer.treino, robust = rob, s.window = "peri", h)
+
+#stlf + boxcox
+stlf.beer.12.bc<- stlf(beer.treino, robust = rob, lambda = "auto", s.window = "peri", h)
+
+accuracy(prev.ets.beer.12, beer.teste)[, "RMSE"]
+accuracy(snaive.beer.12, beer.teste)[, "RMSE"]
+accuracy(stlf.beer.12, beer.teste)[, "RMSE"]
+accuracy(stlf.beer.12.bc, beer.teste)[, "RMSE"]
+```
+
+bricksq
+
+```{r}
+h <- 3*4
+y <- bricksq
+n <- length(bricksq)
+
+bricksq.treino <- ts(y[1:(n-h)], start = start(y), frequency=frequency(y))
+
+bricksq.teste <- ts(y[(n-h+1):n], end = end(y), frequency=frequency(y))
+```
+
+```{r}
+autoplot(bricksq.treino)+
+  autolayer(bricksq.teste)
+```
+
+```{r}
+#ets
+ets.bricksq.12<-ets(bricksq.treino)
+prev.ets.bricksq.12<-forecast(ets.bricksq.12,h)$mean
+
+#snaive
+snaive.bricksq.12<-snaive(bricksq.treino,h)$mean
+
+#stlf
+rob <- test.Outliers.STL(bricksq.treino)
+stlf.bricksq.12<-stlf(bricksq.treino, robust = rob, s.window = "peri", h)
+
+#stlf + boxcox
+stlf.bricksq.12.bc<- stlf(bricksq.treino, robust = rob, lambda = "auto", s.window = "peri", h)
+
+accuracy(prev.ets.bricksq.12, bricksq.teste)[, "RMSE"]
+accuracy(snaive.bricksq.12, bricksq.teste)[, "RMSE"]
+accuracy(stlf.bricksq.12, bricksq.teste)[, "RMSE"]
+accuracy(stlf.bricksq.12.bc, bricksq.teste)[, "RMSE"]
+```
+
+dole
+
+```{r}
+h <- 3*12
+y <- dole
+n <- length(dole)
+
+dole.treino <- ts(y[1:(n-h)], start = start(y), frequency=frequency(y))
+
+dole.teste <- ts(y[(n-h+1):n], end = end(y), frequency=frequency(y))
+```
+
+```{r}
+autoplot(dole.treino)+
+  autolayer(dole.teste)
+```
+
+```{r}
+#ets
+ets.dole.12<-ets(dole.treino)
+prev.ets.dole.12<-forecast(ets.dole.12,h)$mean
+
+#stlf
+rob <- test.Outliers.STL(dole.treino)
+stlf.dole.12<-stlf(dole.treino, robust = rob, s.window = "peri", h)
+
+#stlf + boxcox
+stlf.dole.12.bc<- stlf(dole.treino, robust = rob, lambda = "auto", s.window = "peri", h)
+
+accuracy(prev.ets.dole.12, dole.teste)[, "RMSE"]
+accuracy(stlf.dole.12, dole.teste)[, "RMSE"]
+accuracy(stlf.dole.12.bc, dole.teste)[, "RMSE"]
+```
+
+a10
+
+```{r}
+h <- 3*12
+y <- a10
+n <- length(a10)
+
+a10.treino <- ts(y[1:(n-h)], start = start(y), frequency=frequency(y))
+
+a10.teste <- ts(y[(n-h+1):n], end = end(y), frequency=frequency(y))
+```
+
+```{r}
+autoplot(a10.treino)+
+  autolayer(a10.teste)
+```
+
+```{r}
+#ets
+ets.a10.12<-ets(a10.treino)
+prev.ets.a10.12<-forecast(ets.a10.12,h)$mean
+
+#stlf
+rob <- test.Outliers.STL(a10.treino)
+stlf.a10.12<-stlf(a10.treino, robust = rob, s.window = "peri", h)
+
+#snaive
+snaive.a10.12<-snaive(a10.treino,h)$mean
+
+#stlf + boxcox
+stlf.a10.12.bc<- stlf(a10.treino, robust = rob, lambda = "auto", s.window = "peri", h)
+accuracy(prev.ets.a10.12, a10.teste)[, "RMSE"]
+accuracy(snaive.a10.12, a10.teste)[, "RMSE"]
+accuracy(stlf.a10.12, a10.teste)[, "RMSE"]
+accuracy(stlf.a10.12.bc, a10.teste)[, "RMSE"]
+```
+
+## Questão 7
+
+```{r}
+h<-6
+n<-length(usmelec)
+us.treino <- ts(usmelec[1:(n-h)], start = start(usmelec), frequency=frequency(usmelec))
+
+us.teste <- ts(usmelec[(n-h+1):n], end = end(usmelec), frequency=frequency(usmelec))
+```
+
+```{r}
+autoplot(us.treino)+
+  autolayer(us.treino)
+```
+
+```{r}
+us.lam <- BoxCox.lambda(us.treino)
+
+us.bc <- BoxCox(us.treino, lambda = us.lam)
+
+us.log <- BoxCox(us.treino, lambda = 0)
+```
+
+```{r}
+autoplot(us.bc)
+```
+
+```{r}
+ets.treino <- ets(us.treino)
+ets.bc <- ets(us.bc)
+ets.log <- ets(us.log)
+```
+
+```{r}
+fore.treino <- forecast(ets.treino, h)$mean
+```
+
+```{r}
+fore.bc <- forecast(ets.bc, h, lambda = us.lam)$mean
+```
+
+```{r}
+fore.log <- forecast(ets.log, h, lambda = 0)$mean
+```
+
+```{r}
+autoplot(us.teste)+
+  autolayer(fore.treino)+
+  autolayer(fore.bc, series = "bc")+
+  autolayer(fore.log, series = "log")
+```
+
+```{r}
+accuracy(fore.treino, us.teste)[,c("RMSE")]
+accuracy(fore.bc, us.teste)[,c("RMSE")]
+accuracy(fore.log, us.teste)[,c("RMSE")]
+```
+
+```{r}
+h<-36
+n<-length(usmelec)
+us.treino.36 <- ts(usmelec[1:(n-h)], start = start(usmelec), frequency=frequency(usmelec))
+
+us.teste.36 <- ts(usmelec[(n-h+1):n], end = end(usmelec), frequency=frequency(usmelec))
+```
+
+```{r}
+autoplot(us.treino.36)+
+  autolayer(us.treino.36)
+```
+
+```{r}
+us.lam.36 <- BoxCox.lambda(us.treino.36)
+
+us.bc.36 <- BoxCox(us.treino.36, lambda = us.lam.36)
+
+us.log.36 <- BoxCox(us.treino.36, lambda = 0)
+```
+
+```{r}
+autoplot(us.bc.36)
+```
+
+```{r}
+ets.treino.36 <- ets()
+ets.bc.36 <- ets(us.bc.36)
+ets.log.36 <- ets(us.log.36)
+```
+
+```{r}
+fore.treino.36 <- forecast(ets.treino.36, h)$mean
+
+fore.snaive.us.36 <- snaive(us.treino.36, h)$mean
+
+rob <- test.Outliers.STL(us.treino.36)
+fore.stlf.us.36 <- stlf(us.treino.36, robust = rob, s.window = "peri")$mean
+```
+
+```{r}
+fore.bc.36 <- forecast(ets.bc.36, h, lambda = us.lam.36)$mean
+```
+
+```{r}
+fore.log.36 <- forecast(ets.log.36, h, lambda = 0)$mean
+```
+
+```{r}
+autoplot(us.teste.36)+
+  autolayer(fore.treino.36)+
+  autolayer(fore.bc.36, series = "bc")+
+  autolayer(fore.log.36, series = "log")
+```
+
+```{r}
+accuracy(fore.treino.36, us.teste.36)[,c("RMSE")]
+accuracy(fore.bc.36, us.teste.36)[,c("RMSE")]
+accuracy(fore.log.36, us.teste.36)[,c("RMSE")]
+```
+
+
+
+
+
 
 
