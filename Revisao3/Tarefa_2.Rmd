@@ -1,0 +1,849 @@
+---
+title: "Tarefa 2"
+author: "Julia Silva"
+date: "07 abril 2025"
+output:
+  pdf_document: default
+  word_document: default
+fontsize: 14pt
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp2)
+library(ggplot2)
+library(tseries)
+library(expsmooth)
+load("C:/Users/coimb/OneDrive/Documentos/Series/trabalhos/trabalho.RData")
+
+```
+
+Esta tarefa será resolvida com cada concelho separado dos outros.
+
+Monchique
+## Separar treino de teste:
+```{r}
+h <- 12
+di <- length(ts.mon)
+
+#treino
+mon.treino <- ts(ts.mon[1:(di-h)], frequency=frequency(ts.mon), start=start(ts.mon))
+#teste
+mon.teste <- ts(ts.mon[(di-h+1):di], frequency=frequency(ts.mon), end=end(ts.mon))
+```
+
+______________________________
+Olhão
+## Separar treino de teste:
+```{r}
+h <- 12
+dio <- length(ts.olh)
+
+#treino
+olh.treino <- ts(ts.olh[1:(dio-h)], frequency=frequency(ts.olh), start=start(ts.olh))
+#teste
+olh.teste <- ts(ts.olh[(dio-h+1):dio], frequency=frequency(ts.olh), end=end(ts.olh))
+```
+
+_____________________________
+Portimão
+## Separar treino de teste:
+```{r}
+h <- 12
+dip <- length(ts.por)
+
+#treino
+por.treino <- ts(ts.por[1:(dip-h)], frequency=frequency(ts.por), start=start(ts.por))
+#teste
+por.teste <- ts(ts.por[(dip-h+1):dip], frequency=frequency(ts.por), end=end(ts.por))
+```
+
+
+_____________________________
+São Brás de Alportel
+## Separar treino de teste:
+```{r}
+h <- 12
+dis <- length(ts.sba)
+
+#treino
+sba.treino <- ts(ts.sba[1:(dis-h)], frequency=frequency(ts.sba), start=start(ts.sba))
+#teste
+sba.teste <- ts(ts.sba[(dis-h+1):dis], frequency=frequency(ts.sba), end=end(ts.sba))
+```
+
+
+###Exercício 1
+
+Monchique
+```{r}
+#decomposição aditiva
+dec.A.mon <-decompose(mon.treino, type='additive')
+#decomposição multiplivativa
+dec.M.mon <-decompose(mon.treino, type='multiplicative')
+```
+
+- Valores ajustados para cada decomposição:
+```{r}
+ajust.dec.A.mon <- mon.treino - remainder(dec.A.mon) #aditivo
+ajust.dec.M.mon <- mon.treino - remainder(dec.M.mon) #multiplicativo 
+```
+
+
+
+- Representação grafica:
+```{r}
+autoplot(mon.treino)+ 
+  autolayer(ajust.dec.A.mon)+
+  autolayer(ajust.dec.M.mon)
+```
+
+Pela análise gráfica, o melhor ajustamento é obtido pela decomposição multiplicativa.
+
+- Medidas de erro
+```{r}
+accuracy(ajust.dec.A.mon, mon.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.dec.M.mon, mon.treino)[,c('RMSE','MAE','MAPE')]
+```
+Através das medidas de erro, confirma-se que a decomposição multiplicativa melhor se ajusta aos dados de treino.
+
+- Parcelas de previsao 
+```{r}
+mon.s <- seasonal(dec.M.mon)
+mon.a <- seasadj(dec.M.mon)
+```
+
+```{r}
+mon.s.snaive <- snaive(mon.s, h=h)$mean
+#______________________
+mon.a.naive <- naive(mon.a, h=h)$mean
+mon.a.snaive <- snaive(mon.a, h=h)$mean
+mon.a.meanf <- meanf(mon.a, h=h)$mean
+mon.a.drift <- rwf (mon.a, h=h, drift=TRUE)$mean
+```
+
+
+- Modelos de previsão
+```{r}
+mon.naive <- mon.s.snaive * mon.a.naive
+mon.snaive <- mon.s.snaive*mon.a.snaive
+mon.meanf <- mon.s.snaive*mon.a.meanf
+mon.drift <- mon.s.snaive*mon.a.drift
+```
+
+- Representação gráfica
+```{r}
+autoplot(mon.teste)+
+  autolayer(mon.naive)+
+  autolayer(mon.snaive)+
+  autolayer(mon.meanf)+
+  autolayer(mon.drift)
+```
+A método de previsão que melhor parece se adequar aos dados de treino é através do snaive.
+
+- Medidas de erro:
+```{r}
+accuracy(mon.naive, mon.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(mon.snaive, mon.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(mon.meanf, mon.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(mon.drift, mon.teste)[,c('RMSE','MAE','MAPE')]
+```
+Através das medidas de erro, confirma-se o que observamos no gráfico. Como as previsões utilizando o snaive devolveram valores mais baixos de erro, então este é o melhor método.
+
+
+- Previsões
+```{r}
+mon.snaive
+```
+_________________________________________
+Olhão
+```{r}
+#decomposição aditiva
+dec.A.olh <-decompose(olh.treino, type='additive')
+#decomposição multiplivativa
+dec.M.olh  <-decompose(olh.treino, type='multiplicative')
+```
+
+- Valores ajustados para cada decomposição:
+```{r}
+ajust.dec.A.olh <- olh.treino - remainder(dec.A.olh) #aditivo
+ajust.dec.M.olh <- olh.treino - remainder(dec.M.olh) #multiplicativo 
+```
+
+
+- Representação grafica:
+```{r}
+autoplot(olh.treino)+ 
+  autolayer(ajust.dec.A.olh)+
+  autolayer(ajust.dec.M.olh)
+```
+
+Pela análise gráfica, o melhor ajustamento é obtido pela decomposição multiplicativa.
+
+- Medidas de erro
+```{r}
+accuracy(ajust.dec.A.olh, olh.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.dec.M.olh, olh.treino)[,c('RMSE','MAE','MAPE')]
+```
+Através das medidas de erro, confirma-se que a decomposição multiplicativa melhor se ajusta aos dados de treino.
+
+- Parcelas de previsao 
+```{r}
+olh.s <- seasonal(dec.M.olh)
+olh.a <- seasadj(dec.M.olh)
+```
+
+```{r}
+olh.s.snaive <- snaive(olh.s, h=h)$mean
+#______________________
+olh.a.naive <- naive(olh.a, h=h)$mean
+olh.a.snaive <- snaive(olh.a, h=h)$mean
+olh.a.meanf <- meanf(olh.a, h=h)$mean
+olh.a.drift <- rwf (olh.a, h=h, drift=TRUE)$mean
+```
+
+
+- Modelos de previsão
+```{r}
+olh.naive <- olh.s.snaive * olh.a.naive
+olh.snaive <- olh.s.snaive*olh.a.snaive
+olh.meanf <- olh.s.snaive*olh.a.meanf
+olh.drift <- olh.s.snaive*olh.a.drift
+```
+
+- Representação gráfica
+```{r}
+autoplot(olh.teste)+
+  autolayer(olh.naive)+
+  autolayer(olh.snaive)+
+  autolayer(olh.meanf)+
+  autolayer(olh.drift)
+```
+A método de previsão que melhor parece se adequar aos dados de treino é através do snaive.
+
+- Medidas de erro:
+```{r}
+accuracy(olh.naive, olh.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(olh.snaive, olh.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(olh.meanf, olh.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(olh.drift, olh.teste)[,c('RMSE','MAE','MAPE')]
+```
+Através das medidas de erro, confirma-se o que observamos no gráfico. Como as previsões utilizando o snaive devolveram valores mais baixos de erro, então este é o melhor método.
+
+
+- Previsões
+```{r}
+olh.snaive
+```
+______________________________________________________
+Portimão
+```{r}
+#decomposição aditiva
+dec.A.por <-decompose(por.treino, type='additive')
+#decomposição multiplivativa
+dec.M.por <-decompose(por.treino, type='multiplicative')
+```
+
+- Valores ajustados para cada decomposição:
+```{r}
+ajust.dec.A.por <- por.treino - remainder(dec.A.por) #aditivo
+ajust.dec.M.por <- por.treino - remainder(dec.M.por) #multiplicativo 
+```
+
+
+- Representação grafica:
+```{r}
+autoplot(por.treino)+ 
+  autolayer(ajust.dec.A.por)+
+  autolayer(ajust.dec.M.por)
+```
+
+Pela análise gráfica, o melhor ajustamento é obtido pela decomposição multiplicativa.
+
+- Medidas de erro
+```{r}
+accuracy(ajust.dec.A.por, por.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.dec.M.por, por.treino)[,c('RMSE','MAE','MAPE')]
+```
+Através das medidas de erro, confirma-se que a decomposição multiplicativa melhor se ajusta aos dados de treino.
+
+- Parcelas de previsao 
+```{r}
+por.s <- seasonal(dec.M.por)
+por.a <- seasadj(dec.M.por)
+```
+
+```{r}
+por.s.snaive <- snaive(por.s, h=h)$mean
+#______________________
+por.a.naive <- naive(por.a, h=h)$mean
+por.a.snaive <- snaive(por.a, h=h)$mean
+por.a.meanf <- meanf(por.a, h=h)$mean
+por.a.drift <- rwf (por.a, h=h, drift=TRUE)$mean
+```
+
+
+- Modelos de previsão
+```{r}
+por.naive <- por.s.snaive * por.a.naive
+por.snaive <- por.s.snaive*por.a.snaive
+por.meanf <- por.s.snaive*por.a.meanf
+por.drift <- por.s.snaive*por.a.drift
+```
+
+- Representação gráfica
+```{r}
+autoplot(por.teste)+
+  autolayer(por.naive)+
+  autolayer(por.snaive)+
+  autolayer(por.meanf)+
+  autolayer(por.drift)
+```
+A método de previsão que melhor se adequa aos dados de treino parece ser ou snaive ou drift, mas pelo gráfico é inconclusivo
+
+- Medidas de erro:
+```{r}
+accuracy(por.naive, por.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(por.snaive, por.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(por.meanf, por.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(por.drift, por.teste)[,c('RMSE','MAE','MAPE')]
+```
+Através das medidas de erro, confirma-se o que observamos no gráfico. Como as previsões utilizando o drift devolveram valores mais baixos de erro, então este é o melhor método.
+
+
+- Previsões
+```{r}
+por.drift
+```
+
+______________________________________________________
+São Brás de Alportel
+```{r}
+#decomposição aditiva
+dec.A.sba <-decompose(sba.treino, type='additive')
+#decomposição multiplivativa
+dec.M.sba <-decompose(sba.treino, type='multiplicative')
+```
+
+- Valores ajustados para cada decomposição:
+```{r}
+ajust.dec.A.sba <- sba.treino - remainder(dec.A.sba) #aditivo
+ajust.dec.M.sba <- sba.treino - remainder(dec.M.sba) #multiplicativo 
+```
+
+
+
+- Representação grafica:
+```{r}
+autoplot(sba.treino)+ 
+  autolayer(ajust.dec.A.sba)+
+  autolayer(ajust.dec.M.sba)
+```
+
+Pela análise gráfica, o melhor ajustamento é obtido pela decomposição multiplicativa.
+
+- Medidas de erro
+```{r}
+accuracy(ajust.dec.A.sba, sba.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.dec.M.sba, sba.treino)[,c('RMSE','MAE','MAPE')]
+```
+Através das medidas de erro, confirma-se que a decomposição multiplicativa melhor se ajusta aos dados de treino.
+
+- Parcelas de previsao 
+```{r}
+sba.s <- seasonal(dec.M.sba)
+sba.a <- seasadj(dec.M.sba)
+```
+
+```{r}
+sba.s.snaive <- snaive(sba.s, h=h)$mean
+#______________________
+sba.a.naive <- naive(sba.a, h=h)$mean
+sba.a.snaive <- snaive(sba.a, h=h)$mean
+sba.a.meanf <- meanf(sba.a, h=h)$mean
+sba.a.drift <- rwf (sba.a, h=h, drift=TRUE)$mean
+```
+
+
+- Modelos de previsão
+```{r}
+sba.naive <- sba.s.snaive * sba.a.naive
+sba.snaive <- sba.s.snaive*sba.a.snaive
+sba.meanf <- sba.s.snaive*sba.a.meanf
+sba.drift <- sba.s.snaive*sba.a.drift
+```
+
+- Representação gráfica
+```{r}
+autoplot(sba.teste)+
+  autolayer(sba.naive)+
+  autolayer(sba.snaive)+
+  autolayer(sba.meanf)+
+  autolayer(sba.drift)
+```
+Pela análise gráfica é confuso ver qual o melhor ajustameto
+
+- Medidas de erro:
+```{r}
+accuracy(sba.naive, sba.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(sba.snaive, sba.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(sba.meanf, sba.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(sba.drift, sba.teste)[,c('RMSE','MAE','MAPE')]
+```
+Através das medidas de erro, como as previsões utilizando o naive devolveram valores mais baixos de erro, então este é o melhor método.
+
+
+- Previsões
+```{r}
+sba.naive
+```
+
+
+
+
+
+
+
+
+
+
+
+### Exercício 2
+
+Monchique
+-Decomposição do treino
+```{r}
+rob <- test.Outliers.STL(mon.treino)
+mon.peri <- stl(mon.treino, s.window='periodic', rob=rob)
+mon.7 <- stl(mon.treino, s.window=7, rob=rob)
+mon.13 <- stl(mon.treino, s.window=13, rob=rob)
+```
+
+- Valores ajustados:
+```{r}
+ajust.mon.peri <- mon.treino - remainder(mon.peri)
+ajust.mon.7 <- mon.treino - remainder(mon.7)
+ajust.mon.13 <- mon.treino - remainder(mon.13)
+```
+
+- Graficamente:
+```{r}
+autoplot(mon.treino)+
+  autolayer(ajust.mon.peri)+
+  autolayer(ajust.mon.7)+
+  autolayer(ajust.mon.13)
+```
+Pela análise gráfica, não é muito conclusivo qual das janelas sazonais melhor se adequa aos dados.
+
+- Medidas de erro
+```{r}
+accuracy(ajust.mon.peri, mon.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.mon.7, mon.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.mon.13, mon.treino)[,c('RMSE','MAE','MAPE')]
+```
+Dado que as medidas de erro são inferiores para s.window=7, então este é o melhor ajustamento.
+
+- Parcelas de previsao 
+```{r}
+mon.s.7 <- seasonal(mon.7)
+mon.a.7 <- seasadj(mon.7)
+```
+
+```{r}
+mon.s.snaive.7 <- snaive(mon.s.7, h=h)$mean
+#______________________
+mon.a.naive.7 <- naive(mon.a.7, h=h)$mean
+mon.a.snaive.7 <- snaive(mon.a.7, h=h)$mean
+mon.a.meanf.7 <- meanf(mon.a.7, h=h)$mean
+mon.a.drift.7 <- rwf (mon.a.7, h=h, drift=TRUE)$mean
+```
+
+
+- Modelos de previsão
+```{r}
+mon.naive.7 <- mon.s.snaive.7 + mon.a.naive.7
+mon.snaive.7 <- mon.s.snaive.7+mon.a.snaive.7
+mon.meanf.7 <- mon.s.snaive.7+mon.a.meanf.7
+mon.drift.7 <- mon.s.snaive.7+mon.a.drift.7
+```
+
+- Representação gráfica
+```{r}
+autoplot(mon.teste)+
+  autolayer(mon.naive.7)+
+  autolayer(mon.snaive.7)+
+  autolayer(mon.meanf.7)+
+  autolayer(mon.drift.7)
+```
+Pela análise gráfica, parece que as previsões obtidas pelo snaive se adequam melhor
+
+
+- Medidas de erro:
+```{r}
+accuracy(mon.naive.7, mon.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(mon.snaive.7, mon.teste)[,c('RMSE','MAE','MAPE')] #melhor
+accuracy(mon.meanf.7, mon.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(mon.drift.7, mon.teste)[,c('RMSE','MAE','MAPE')]
+```
+Neste caso, o que melhor se ajusta aos dados de teste são as previsões obtidas por snaive
+
+________________________________________________
+Olhão
+-Decomposição do treino
+```{r}
+rob <- test.Outliers.STL(olh.treino)
+olh.peri <- stl(olh.treino, s.window='periodic', rob=rob)
+olh.7 <- stl(olh.treino, s.window=7, rob=rob)
+olh.13 <- stl(olh.treino, s.window=13, rob=rob)
+```
+
+- Valores ajustados:
+```{r}
+ajust.olh.peri <- olh.treino - remainder(olh.peri)
+ajust.olh.7 <- olh.treino - remainder(olh.7)
+ajust.olh.13 <- olh.treino - remainder(olh.13)
+```
+
+- Graficamente:
+```{r}
+autoplot(olh.treino)+
+  autolayer(ajust.olh.peri)+
+  autolayer(ajust.olh.7)+
+  autolayer(ajust.olh.13)
+```
+Pela análise gráfica, não é muito conclusivo qual das janelas sazonais melhor se adequa aos dados.
+
+- Medidas de erro
+```{r}
+accuracy(ajust.olh.peri, olh.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.olh.7, olh.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.olh.13, olh.treino)[,c('RMSE','MAE','MAPE')]
+```
+Dado que as medidas de erro são inferiores para s.window=7, então este é o melhor ajustamento.
+
+- Parcelas de previsao 
+```{r}
+olh.s.7 <- seasonal(olh.7)
+olh.a.7 <- seasadj(olh.7)
+```
+
+```{r}
+olh.s.snaive.7 <- snaive(olh.s.7, h=h)$mean
+#______________________
+olh.a.naive.7 <- naive(olh.a.7, h=h)$mean
+olh.a.snaive.7 <- snaive(olh.a.7, h=h)$mean
+olh.a.meanf.7 <- meanf(olh.a.7, h=h)$mean
+olh.a.drift.7 <- rwf (olh.a.7, h=h, drift=TRUE)$mean
+```
+
+
+- Modelos de previsão
+```{r}
+olh.naive.7 <- olh.s.snaive.7 + olh.a.naive.7
+olh.snaive.7 <- olh.s.snaive.7+olh.a.snaive.7
+olh.meanf.7 <- olh.s.snaive.7+olh.a.meanf.7
+olh.drift.7 <- olh.s.snaive.7+olh.a.drift.7
+```
+
+- Representação gráfica
+```{r}
+autoplot(olh.teste)+
+  autolayer(olh.naive.7)+
+  autolayer(olh.snaive.7)+
+  autolayer(olh.meanf.7)+
+  autolayer(olh.drift.7)
+```
+Pela análise gráfica, parece inconclusivo
+
+- Medidas de erro:
+```{r}
+accuracy(olh.naive.7, olh.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(olh.snaive.7, olh.teste)[,c('RMSE','MAE','MAPE')] 
+accuracy(olh.meanf.7, olh.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(olh.drift.7, olh.teste)[,c('RMSE','MAE','MAPE')]
+```
+Neste caso, o que melhor se ajusta aos dados de teste são as previsões obtidas por naive
+
+___________________________________________
+Portimão
+
+-Decomposição do treino
+```{r}
+rob <- test.Outliers.STL(por.treino)
+por.peri <- stl(por.treino, s.window='periodic', rob=rob)
+por.7 <- stl(por.treino, s.window=7, rob=rob)
+por.13 <- stl(por.treino, s.window=13, rob=rob)
+```
+
+- Valores ajustados:
+```{r}
+ajust.por.peri <- por.treino - remainder(por.peri)
+ajust.por.7 <- por.treino - remainder(por.7)
+ajust.por.13 <- por.treino - remainder(por.13)
+```
+
+- Graficamente:
+```{r}
+autoplot(por.treino)+
+  autolayer(ajust.por.peri)+
+  autolayer(ajust.por.7)+
+  autolayer(ajust.por.13)
+```
+Pela análise gráfica, parece que a janela sazonal de 7 se adequa melhor
+
+- Medidas de erro
+```{r}
+accuracy(ajust.por.peri, por.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.por.7, por.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.por.13, por.treino)[,c('RMSE','MAE','MAPE')]
+```
+Dado que as medidas de erro são inferiores para s.window=7, então este é o melhor ajustamento.
+
+- Parcelas de previsao 
+```{r}
+por.s.7 <- seasonal(por.7)
+por.a.7 <- seasadj(por.7)
+```
+
+```{r}
+por.s.snaive.7 <- snaive(por.s.7, h=h)$mean
+#______________________
+por.a.naive.7 <- naive(por.a.7, h=h)$mean
+por.a.snaive.7 <- snaive(por.a.7, h=h)$mean
+por.a.meanf.7 <- meanf(por.a.7, h=h)$mean
+por.a.drift.7 <- rwf (por.a.7, h=h, drift=TRUE)$mean
+```
+
+
+- Modelos de previsão
+```{r}
+por.naive.7 <- por.s.snaive.7 + por.a.naive.7
+por.snaive.7 <- por.s.snaive.7+por.a.snaive.7
+por.meanf.7 <- por.s.snaive.7+por.a.meanf.7
+por.drift.7 <- por.s.snaive.7+por.a.drift.7
+```
+
+- Representação gráfica
+```{r}
+autoplot(por.teste)+
+  autolayer(por.naive.7)+
+  autolayer(por.snaive.7)+
+  autolayer(por.meanf.7)+
+  autolayer(por.drift.7)
+```
+Pela análise gráfica, parece que as previsões obtidas pelo drift se adequam melhor
+
+
+- Medidas de erro:
+```{r}
+accuracy(por.naive.7, por.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(por.snaive.7, por.teste)[,c('RMSE','MAE','MAPE')] 
+accuracy(por.meanf.7, por.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(por.drift.7, por.teste)[,c('RMSE','MAE','MAPE')]
+```
+Neste caso, o que melhor se ajusta aos dados de teste são as previsões obtidas por drift
+
+
+_____________________________________________________________________
+São Brás de Alportel
+
+-Decomposição do treino
+```{r}
+rob <- test.Outliers.STL(sba.treino)
+sba.peri <- stl(sba.treino, s.window='periodic', rob=rob)
+sba.7 <- stl(sba.treino, s.window=7, rob=rob)
+sba.13 <- stl(sba.treino, s.window=13, rob=rob)
+```
+
+- Valores ajustados:
+```{r}
+ajust.sba.peri <- sba.treino - remainder(sba.peri)
+ajust.sba.7 <- sba.treino - remainder(sba.7)
+ajust.sba.13 <- sba.treino - remainder(sba.13)
+```
+
+- Graficamente:
+```{r}
+autoplot(sba.treino)+
+  autolayer(ajust.sba.peri)+
+  autolayer(ajust.sba.7)+
+  autolayer(ajust.sba.13)
+```
+Pela análise gráfica, não é muito conclusivo qual das janelas sazonais melhor se adequa aos dados.
+
+- Medidas de erro
+```{r}
+accuracy(ajust.sba.peri, sba.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.sba.7, sba.treino)[,c('RMSE','MAE','MAPE')]
+accuracy(ajust.sba.13, sba.treino)[,c('RMSE','MAE','MAPE')]
+```
+Dado que as medidas de erro são inferiores para s.window='periodic', então este é o melhor ajustamento.
+
+- Parcelas de previsao 
+```{r}
+sba.s.peri <- seasonal(sba.peri)
+sba.a.peri <- seasadj(sba.peri)
+```
+
+```{r}
+sba.s.snaive.peri <- snaive(sba.s.peri, h=h)$mean
+#______________________
+sba.a.naive.peri <- naive(sba.a.peri, h=h)$mean
+sba.a.snaive.peri <- snaive(sba.a.peri, h=h)$mean
+sba.a.meanf.peri <- meanf(sba.a.peri, h=h)$mean
+sba.a.drift.peri <- rwf (sba.a.peri, h=h, drift=TRUE)$mean
+```
+
+
+- Modelos de previsão
+```{r}
+sba.naive.peri <- sba.s.snaive.peri + sba.a.naive.peri
+sba.snaive.peri <- sba.s.snaive.peri+sba.a.snaive.peri
+sba.meanf.peri <- sba.s.snaive.peri+sba.a.meanf.peri
+sba.drift.peri <- sba.s.snaive.peri+sba.a.drift.peri
+```
+
+- Representação gráfica
+```{r}
+autoplot(sba.teste)+
+  autolayer(sba.naive.peri)+
+  autolayer(sba.snaive.peri)+
+  autolayer(sba.meanf.peri)+
+  autolayer(sba.drift.peri)
+```
+Pela análise gráfica, parece inconclusivo
+
+
+- Medidas de erro:
+```{r}
+accuracy(sba.naive.peri, sba.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(sba.snaive.peri, sba.teste)[,c('RMSE','MAE','MAPE')] 
+accuracy(sba.meanf.peri, sba.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(sba.drift.peri, sba.teste)[,c('RMSE','MAE','MAPE')]
+```
+Neste caso, o que melhor se ajusta aos dados de teste são as previsões obtidas por naive
+
+
+
+
+
+
+
+
+
+
+
+### Exercício 3
+
+Monchique
+```{r}
+autoplot(mon.teste)+
+  autolayer(mon.snaive)+
+  autolayer(mon.snaive.7)
+```
+Pela análise gráfica, parece que ambos os ajustamente são iguais,dado que há sobreposição das séries.
+
+_______________________________________________
+Olhão
+```{r}
+autoplot(olh.teste)+
+  autolayer(olh.snaive)+
+  autolayer(olh.naive.7)
+```
+Pela análise gráfica, parece que o ajustamento obtido pelo stl com s.window=7 é o melhor ajustamento.
+
+_______________________________________________________________
+Portimão
+```{r}
+autoplot(por.teste)+
+  autolayer(por.drift)+
+  autolayer(por.drift.7)
+```
+Pela análise gráfica, parece que o ajustamento obtido pelo stl com s.window=7 é o melhor ajustamento.
+
+
+_________________________________________________________
+
+São Brás de Alportel
+```{r}
+autoplot(sba.teste)+
+  autolayer(sba.naive)+
+  autolayer(sba.naive.peri)
+```
+Pela análise gráfica, parece inconclusivo.
+
+
+
+### Exercício 4
+
+Monchique
+```{r}
+accuracy(mon.snaive, mon.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(mon.snaive.7, mon.teste)[,c('RMSE','MAE','MAPE')]
+```
+
+Até mesmo as medidas de erro são iguais, assim parece que a qualidade de ambas as previsões é a mesma.
+
+```{r}
+checkresiduals(mon.snaive)
+```
+```{r}
+checkresiduals(mon.snaive.7)
+```
+
+
+Como, mais uma vez, o pvalue de ambos os ajustamentos foi igual (0.09982), então os resíduo são ruídos branco. Isso significa que podemos confiar nas previsões.
+_____________________________________
+
+Olhão
+```{r}
+accuracy(olh.snaive, olh.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(olh.naive.7, olh.teste)[,c('RMSE','MAE','MAPE')]
+```
+Pelas medidas de erro, o ajustamento por stl é o melhor.
+
+
+```{r}
+checkresiduals(olh.naive.7)
+```
+Para um nível de significância de 1%, então os resíduos do ajustamento por stl são ruídos brancos, e neste caso, podemos dizer que as previsões são confiáveis.
+
+
+_____________________________________
+
+Portimão
+```{r}
+accuracy(por.drift, por.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(por.drift.7, por.teste)[,c('RMSE','MAE','MAPE')]
+```
+Pelas medidas de erro, o ajustamento utilizando a decomposição clássica multiplicativa é o melhor.
+
+
+
+```{r}
+checkresiduals(por.drift)
+```
+Para um nível de significância de 1%, então os resíduos do ajustamento por stl são ruídos brancos, e neste caso, podemos dizer que as previsões são confiáveis.
+
+_____________________________________
+
+São Brás de Alportel
+```{r}
+accuracy(sba.naive, sba.teste)[,c('RMSE','MAE','MAPE')]
+accuracy(sba.naive.peri, sba.teste)[,c('RMSE','MAE','MAPE')]
+```
+Pelas medidas de erro, o ajustamento utilizando a decomposição clássica multiplicativa é o melhor
+
+
+```{r}
+checkresiduals(sba.naive)
+```
+Neste caso, para qualquer nível de significância, os resíduos são ruído branco, logo as previsões que derivam deste modelo são confiáveis.
+
+
+
+### Exercício 5
+
+Respondendo à pergunta colocada, nem sempre o melhor ajustamento vai devolver previsões mais exatas, isto porque apesar de ser o melhor ajustamento se comparado com os outros, os resíduos, se não forem ruído branco. indicam que esse ajustamento devolve previsões que podem estar incorretas. Portanto, ser o melhor ajustamento e ter as previsões mais extas podem não acontecer em simultâneo. 
+
+Por exemplo, no caso dos concelhos de Olhão e Portimão, as previsões só serão confiáveis (masi exatas) se considerarmos um nível de significância de 1%. Ou seja, se fosse 5% ou 10%, apesar dos ajustamentos escolhidos para os respetivos concelhos terem sido os melhores, as previsões não seriam confiáveis.

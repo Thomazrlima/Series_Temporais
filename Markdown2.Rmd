@@ -101,6 +101,7 @@ accuracy(paper.ses$fitted, books[,c("Paperback")])[,c("RMSE")]
 accuracy(paper.holt$fitted, books[,c("Paperback")])[,c("RMSE")]
 accuracy(paper.holtD$fitted, books[,c("Paperback")])[,c("RMSE")]
 ```
+
 ```{r}
 accuracy(hard.ses$fitted, books[,c("Hardcover")])[,c("RMSE")]
 accuracy(hard.holt$fitted, books[,c("Hardcover")])[,c("RMSE")]
