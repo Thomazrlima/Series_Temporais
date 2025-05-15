@@ -643,6 +643,59 @@ adf.test(ts.gas.dif12)
 ```
 O valor-p do teste DF foi igual a 0.01, sendo assim menor do qeu 0.05. Ou seja, considerando o nível de signofocância $\alpha=5\%$ rejeitamos a hipótese nula, sendo assim, a série é estacionária.
 
+Exemplo ARIMA
+
+```{r}
+ari <- auto.arima(internet)
+```
+
+-Opção 1, uando o AUTO.ARIMA
+
+```{r}
+tsdisplay(internet)
+internet.arima <- auto.arima(internet)
+```
+
+- Averiguar se os resíduos são ruído branco
+
+```{r}
+checkresiduals(internet.arima)
+```
+
+- Opção 2: Utilizando a função ARIMA (A não auto)
+
+Slide 27 e 28
+
+```{r}
+autoplot(internet)
+```
+
+Uma vez que a série não é estacionária temos que 
+
+```{r}
+ndiffs(internet)
+```
+
+```{r}
+internet.diff.1 <- diff(internet)
+autoplot(internet.diff.1)
+```
+
+```{r}
+ndiffs(internet.diff.1)
+```
+
+```{r}
+tsdisplay(internet.diff.1)
+```
+
+```{r}
+internet.ar <- arima(internet.diff.1, order = c(3,0,0)) #AR(3) ou Arima(3,0,0)
+```
+
+```{r}
+internet.diff.1
+```
 
 
 
