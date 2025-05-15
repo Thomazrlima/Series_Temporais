@@ -557,8 +557,91 @@ accuracy(fore.bc.36, us.teste.36)[,c("RMSE")]
 accuracy(fore.log.36, us.teste.36)[,c("RMSE")]
 ```
 
+```{r}
+autoplot(dj)
+```
 
+```{r}
+ggAcf(dj)
+```
 
+```{r}
+diff.dj <- diff(dj)
+autoplot(diff.dj) + ylab("Change in Dow Jones Index")
+```
+
+```{r}
+ggAcf(diff.dj)
+```
+
+```{r}
+Box.test(diff.dj,lag=10, type="Ljung")$p.value
+```
+
+Para o nível de significância de 5% a hipótese nula não pode ser rejeitada, logo a série é estacionária.
+
+```{r}
+log.usmelec <- diff(log(usmelec),lag = 12)
+```
+
+```{r}
+autoplot(log.usmelec)
+```
+
+```{r}
+ggAcf(log.usmelec)
+```
+
+```{r}
+log.usmelec.1 <- diff(log.usmelec)
+```
+
+```{r}
+autoplot(log.usmelec.1)
+```
+
+```{r}
+ggAcf(log.usmelec.1)
+```
+
+```{r}
+Box.test(log.usmelec.1, lag =10, type="Ljung")
+```
+
+# Exercícios 6
+
+## Questão 3
+
+```{r}
+autoplot(ts.gas)
+```
+
+- Diff para remover a sazonalidade
+
+```{r}
+nsdiffs(ts.gas)
+```
+
+```{r}
+ts.gas.dif12 <- diff(ts.gas, lag=12)
+```
+
+```{r}
+autoplot(ts.gas.dif12)
+```
+
+- Teste de estacionaridade
+
+Teste de Dickey-Fuller
+
+$H_0$: A série temporal não é estacionária
+vs
+$H_1$: A série temporal é estacionária
+
+```{r}
+adf.test(ts.gas.dif12)
+```
+O valor-p do teste DF foi igual a 0.01, sendo assim menor do qeu 0.05. Ou seja, considerando o nível de signofocância $\alpha=5\%$ rejeitamos a hipótese nula, sendo assim, a série é estacionária.
 
 
 
