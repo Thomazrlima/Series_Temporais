@@ -697,5 +697,263 @@ internet.ar <- arima(internet.diff.1, order = c(3,0,0)) #AR(3) ou Arima(3,0,0)
 internet.diff.1
 ```
 
+# Exercício 7
+
+# Questão 1) Considere os dados usgdp
+
+a) Se necessário, encontrar uma transformação Box-Cox adequada para os dados.
+
+```{r}
+autoplot(usgdp)
+```
+
+b) Ajuste um modelo ARIMA adequado aos dados da alínea anterior utilizando auto.arima(). Indique o modelo e seus coeficientes.
+```{r}
+(auto.usgdp <- auto.arima(usgdp))
+```
+
+fi1 = -0.1228   teta2 = 0.5835
+f12 =  0.3106   teta2 = 0.3669
+
+```{r}
+autoplot(usgdp)+
+  autolayer(auto.usgdp$fitted)
+```
+
+
+c) Faça o diagnóstico aos resíduos.
+```{r}
+checkresiduals(auto.usgdp$residuals)
+```
+
+d) Experimente outros modelos plausíveis, experimentando várias ordens.
+```{r}
+ndiffs(usgdp)
+```
+
+Arima(p, 2, q)
+
+```{r}
+ggtsdisplay(usgdp)
+```
+
+```{r}
+(fit.021 <- Arima(usgdp, order = c(0,2,1)))
+```
+
+```{r}
+(fit.120 <- Arima(usgdp, order = c(1,2,0)))
+```
+
+```{r}
+(fit.121 <- Arima(usgdp, order = c(1,2,1)))
+```
+
+```{r}
+(fit.122 <- Arima(usgdp, order = c(1,2,2)))
+```
+
+```{r}
+(fit.123 <- Arima(usgdp, order = c(1,2,3)))
+```
+
+```{r}
+(fit.124 <- Arima(usgdp, order = c(1,2,4)))
+```
+
+```{r}
+(fit.221 <- Arima(usgdp, order = c(2,2,1))) #Melhor
+```
+
+```{r}
+(fit.223 <- Arima(usgdp, order = c(2,2,3)))
+```
+
+e) Escolha o melhor modelo ARIMA com base no critério de AIC e faça um diagnóstico aos residuos.
+
+```{r}
+checkresiduals(fit.221$residuals)
+```
+
+f) Averigue o modelo acima em relação à estacionaridade e invertibilidade.
+
+Coefficients:
+         ar1     ar2      ma1
+      0.2421  0.2074  -0.9666
+s.e.  0.0664  0.0662   0.0153
+
+fi1 = -0.2421 teta1 = -0.9666
+fi2 =  0.0664 teta2 = NULL
+
+É Estacionária e Invertível
+
+g) Obtenha as previsões (h=20) para o seu modelo ajustado. Serão as previsões razoáveis?
+
+```{r}
+for.usgdp <- forecast(fit.221, h=20)
+```
+
+```{r}
+autoplot(usgdp)+
+  autolayer(for.usgdp$mean)
+```
+
+
+h) Compare o resultado acima com o que obteria utilizando a função ets() (sem transformação).
+
+```{r}
+ets.usgdp <- ets(usgdp)
+for.ets.usgdp <- forecast(ets.usgdp, h = 20)
+```
+
+```{r}
+autoplot(usgdp)+
+  autolayer(for.ets.usgdp$mean)+
+  autolayer(for.usgdp$mean)
+```
+
+```{r}
+checkresiduals(ets.usgdp$residuals)
+```
+
+ARIMA pois os resíduos do ETS não são ruido branco
+
+2) Consideremos os dados wmurders (package: fpp2), o número de mulheres assassinadas anualmente (por 100.000 habitantes) nos Estados Unidos.
+
+a) Ao estudar os gráficos apropriados desta série temporal, encontre um modelo ARIMA(p,d,q) apropriado a estes dados com base no critério AIC.
+
+```{r}
+autoplot(wmurders)
+```
+
+```{r}
+ndiffs(wmurders)
+```
+
+```{r}
+ggtsdisplay(wmurders)
+```
+
+```{r}
+(fit.021.w <- arima(wmurders, order = c(0,2,1)))
+```
+```{r}
+(fit.121.w <- arima(wmurders, order = c(1,2,1)))
+```
+
+```{r}
+fit.221.w <- arima(wmurders, order = c(2,2,1))
+```
+
+```{r}
+(fit.321.w <- arima(wmurders, order = c(3,2,1)))
+```
+
+```{r}
+(fit.222.w <- arima(wmurders, order = c(2,2,2)))
+```
+
+
+b) Examine os resíduos. Será o modelo satisfatório?
+
+```{r}
+checkresiduals(fit.221.w$residuals)
+```
+
+Resíduos = Ruido Branco
+
+c) Obtenha as previsões a três passos à frente (h=3).
+
+```{r}
+for.w <- forecast(fit.221.w, h = 3)
+```
+
+
+d) Crie um gráfico da série temporal com as previsões e os intervalos de previsão para h=3.
+
+```{r}
+autoplot(wmurders)+
+  autolayer(for.w$mean)
+```
+
+
+e) Será que a função auto.arima() dá o mesmo modelo? Se não o for, qual o modelo que acha que é melhor?
+
+```{r}
+(auto.arima(wmurders))
+```
+
+3) Considere os dados austourists (package: fpp2), o total de dormidas, por trimestres, de turistas internacionais na Austrália para o período 1999-2015
+
+a) Separe os últimos 2 anos e coloque-os num objecto designado por aus.test. Os restantes coloque em aus.train.
+
+```{r}
+autoplot(austourists)
+```
+```{r}
+tail(austourists)
+```
+
+
+```{r}
+aus.treino <- window(austourists, end = c(2013,4))
+aus.teste <- window(austourists, start = c(2014,1))
+length(aus.treino)
+length(aus.teste)
+```
+
+b) Represente os dados graficamente e comente.
+
+```{r}
+autoplot(aus.treino)
+```
+
+c) Será que os dados precisam de ser transformados? Em caso afirmativo, encontrar uma transformação adequada.
+
+Melhor não transformar, a amplitude não muda assim tanto, então...
+
+d) O que podemos observar no gráfico ACF?
+
+```{r}
+ggAcf(aus.treino)
+```
+
+
+e) O que podemos observar no gráfico PACF?
+
+```{r}
+ggPacf(aus.treino)
+```
+
+
+f) Use a função auto.arima() para ajustar um modelo aos dados.
+
+```{r}
+(auto.aus <- auto.arima(aus.treino))
+```
+
+
+g) Use a função ets() para ajustar um modelos aos dados.
+
+```{r}
+ets.aus <- ets(aus.treino)
+```
+
+
+h) Através de qual dos modelos se obtem o melhor ajuste? Use a medida de erro RMSE.
+
+```{r}
+accuracy(ets.aus)[,c("RMSE")]
+accuracy(auto.aus)[,c("RMSE")]
+```
+
+
+i) Obtenha as previsões para ambos os modelos. Será que o melhor modelo é também aquele cujas previsões são as mais próximas dos valores reais (dados de teste)? Use a medida de erro RMSE.
+
+```{r}
+
+```
+
+
 
 
