@@ -1,0 +1,649 @@
+---
+title: "Revisao4"
+output: html_document
+---
+
+# Lista 6
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp2)
+library(ggplot2)
+library(tseries)
+load("C:/PENTES/Series_Temporais/aula1.RData")
+```
+
+1) A série temporal ibmclose (package: fma) é um exemplo clássico de uma série não estacionária. Use R para representar graficamente os preços diários para as acções IBM e a função ACF. Explique como cada gráfico mostra que a série não é estacionária e se deve ser diferenciada.
+
+```{r}
+autoplot(ibmclose)
+```
+
+A série apresenta uma tendência ascendente (Descendente depois de certo ponto) ao longo do tempo, o que é uma violação da estacionariedade que requer média constante.
+
+```{r}
+tsdisplay(ibmclose)
+```
+
+As autocorrelações permanecem significativamente positivas por muitas defasagens, diminuindo gradualmente. Isso é típico de séries com tendência.
+
+A série deve ser diferenciada para tentar remover a tendência e alcançar estacionariedade. Após diferenciação, a ACF deve ser reavaliada para verificar se o processo de diferenciação foi suficiente ou se diferenciações adicionais são necessárias.
+
+2) Para as séries temporais abaixo, encontrar uma transformação Box-Cox apropriada, se necessário, e uma ordem de diferenciação a fim de obter dados estacionários.
+
+a) usnetelec
+
+```{r}
+autoplot(usnetelec)
+```
+
+```{r}
+tsdisplay(usnetelec)
+```
+
+```{r}
+ndiffs(usnetelec)
+```
+
+```{r}
+diff2.usnetelec <- diff(usnetelec, differences = 2)
+```
+
+```{r}
+adf.test(diff2.usnetelec)
+```
+
+Rejeitamos a hipótese nula de não-estacionariedade
+
+b) usgdp
+
+```{r}
+autoplot(usgdp)
+```
+
+```{r}
+tsdisplay(usgdp)
+```
+
+```{r}
+ndiffs(usgdp)
+```
+
+Rejeitamos a hipótese nula de não-estacionariedade
+
+```{r}
+diff2.usgdp <- diff(usgdp, differences = 2)
+```
+
+```{r}
+adf.test(diff2.usgdp)
+```
+Rejeitamos a hipótese nula de não-estacionariedade
+
+c) mcopper
+
+```{r}
+autoplot(mcopper)
+```
+
+```{r}
+ndiffs(mcopper)
+```
+
+```{r}
+diff.mcopper <- diff(mcopper)
+```
+
+```{r}
+adf.test(diff.mcopper)
+```
+
+```{r}
+autoplot(diff.mcopper)
+```
+
+d) enplanements
+
+```{r}
+ggseasonplot(enplanements)
+```
+
+
+```{r}
+autoplot(enplanements)
+```
+
+```{r}
+nsdiffs(enplanements)
+```
+
+```{r}
+diff.enplanements <- diff(enplanements, lag = 12)
+```
+
+```{r}
+adf.test(enplanements)
+```
+
+```{r}
+autoplot(diff.enplanements)
+```
+
+```{r}
+lambda_enplanements <- BoxCox.lambda(enplanements)
+bc_enplanements <- BoxCox(enplanements, lambda = lambda_enplanements)
+```
+
+```{r}
+bc.diff.enplanements <- diff(bc_enplanements)
+```
+
+```{r}
+adf.test(bc.diff.enplanements)
+```
+
+```{r}
+autoplot(bc.diff.enplanements)
+```
+
+
+e) visitors
+
+```{r}
+autoplot(visitors)
+```
+
+```{r}
+ggseasonplot(visitors)
+```
+
+
+```{r}
+lambda.visitors <- BoxCox.lambda(visitors)
+
+bc.visitors <- BoxCox(visitors, lambda = lambda.visitors)
+
+nsdiffs(bc.visitors)
+```
+
+```{r}
+diff.visitors <- diff(visitors, lag = 12)
+```
+
+```{r}
+adf.test(visitors)
+```
+
+```{r}
+autoplot(diff.visitors)
+```
+
+```{r}
+tsdisplay(diff.visitors)
+```
+
+
+3) Para os dados NATURALGAS (pasta Dados na tutoria), encontre a ordem apropriada de diferenciação (após transformação, se necessário) para obter dados estacionários.
+
+```{r}
+autoplot(ts.gas)
+```
+
+```{r}
+nsdiffs(ts.gas)
+```
+```{r}
+diff.ts.gas <- diff(ts.gas, lag = 12)
+```
+
+```{r}
+adf.test(diff.ts.gas)
+```
+
+$H_0$: A série temporal não é estacionária
+vs
+$H_1$: A série temporal é estacionária
+
+O valor-p do teste DF foi igual a 0.01, sendo assim menor do qeu 0.05. Ou seja, considerando o nível de signofocância $\alpha=5\%$ rejeitamos a hipótese nula, sendo assim, a série é estacionária.
+
+# Lista 7
+
+1. Considere os dados usgdp (package expsmooth).
+
+a) Se necessário, encontrar uma transformação Box-Cox adequada para os dados.
+
+
+```{r}
+autoplot(usgdp)
+```
+
+b) Ajuste um modelo ARIMA adequado aos dados da alínea anterior utilizando auto.arima(). Indique o modelo e seus coeficientes.
+
+```{r}
+auto.usgdp <- auto.arima(usgdp)
+```
+
+
+c) Faça o diagnóstico aos resíduos.
+
+```{r}
+checkresiduals(auto.usgdp$residuals)
+```
+
+Os resíduos parecem ser ruído branco
+
+d) Experimente outros modelos plausíveis, experimentando várias ordens.
+
+```{r}
+ndiffs(usgdp)
+```
+
+Arima(p, 2, q)
+
+```{r}
+ggtsdisplay(usgdp)
+```
+
+```{r}
+(fit.021 <- Arima(usgdp, order = c(0,2,1)))
+```
+
+```{r}
+(fit.120 <- Arima(usgdp, order = c(1,2,0)))
+```
+
+```{r}
+(fit.121 <- Arima(usgdp, order = c(1,2,1)))
+```
+
+```{r}
+(fit.122 <- Arima(usgdp, order = c(1,2,2)))
+```
+
+```{r}
+(fit.123 <- Arima(usgdp, order = c(1,2,3)))
+```
+
+```{r}
+(fit.124 <- Arima(usgdp, order = c(1,2,4)))
+```
+
+```{r}
+(fit.221 <- Arima(usgdp, order = c(2,2,1))) #Melhor
+```
+
+```{r}
+(fit.223 <- Arima(usgdp, order = c(2,2,3)))
+```
+
+
+e) Escolha o melhor modelo ARIMA com base no critério de AIC e faça um diagnóstico aos residuos.
+
+```{r}
+checkresiduals(fit.221$residuals)
+```
+
+f) Averigue o modelo acima em relação à estacionaridade e invertibilidade.
+
+Coefficients:
+         ar1     ar2      ma1
+      0.2421  0.2074  -0.9666
+s.e.  0.0664  0.0662   0.0153
+
+fi1 = -0.2421 teta1 = -0.9666
+fi2 =  0.0664 teta2 = NULL
+
+É Estacionária e Invertível
+
+g) Obtenha as previsões (h=20) para o seu modelo ajustado. Serão as previsões razoáveis?
+
+```{r}
+for.usgdp <- forecast(fit.221, h = 20)
+```
+
+```{r}
+autoplot(usgdp)+
+  autolayer(for.usgdp$mean)
+```
+
+h) Compare o resultado acima com o que obteria utilizando a função ets() (sem transformação).
+
+```{r}
+ets.usgdp <- ets(usgdp)
+for.ets.usgdp <- forecast(ets.usgdp, h = 20)
+```
+
+```{r}
+autoplot(usgdp)+
+  autolayer(for.ets.usgdp$mean)+
+  autolayer(for.usgdp$mean)
+```
+
+```{r}
+checkresiduals(ets.usgdp$residuals)
+```
+
+Há autocorrelação nos resíduos, logo, a previsão não é confiável
+
+2. Consideremos os dados wmurders (package: fpp2), o número de mulheres assassinadas anualmente (por 100.000 habitantes) nos Estados Unidos.
+
+a) Ao estudar os gráficos apropriados desta série temporal, encontre um modelo ARIMA(p,d,q) apropriado a estes dados com base no critério AIC.
+
+```{r}
+autoplot(wmurders)
+```
+
+```{r}
+ndiffs(wmurders)
+```
+
+```{r}
+ggtsdisplay(wmurders)
+```
+
+```{r}
+(fit.021.w <- arima(wmurders, order = c(0,2,1)))
+```
+```{r}
+(fit.121.w <- arima(wmurders, order = c(1,2,1)))
+```
+
+```{r}
+(fit.221.w <- arima(wmurders, order = c(2,2,1))) # Melhor
+```
+
+```{r}
+(fit.321.w <- arima(wmurders, order = c(3,2,1)))
+```
+
+```{r}
+(fit.222.w <- arima(wmurders, order = c(2,2,2)))
+```
+
+b) Examine os resíduos. Será o modelo satisfatório?
+
+```{r}
+checkresiduals(fit.221.w$residuals)
+```
+
+Não rejeitamos a hipótese nula, logo os resíduos são ruído branco
+
+c) Obtenha as previsões a três passos à frente (h=3).
+
+```{r}
+for.w <- forecast(fit.221.w, h = 3)
+```
+
+d) Crie um gráfico da série temporal com as previsões e os intervalos de previsão para h=3.
+
+```{r}
+autoplot(wmurders)+
+  autolayer(for.w$mean)
+```
+
+e) Será que a função auto.arima() dá o mesmo modelo? Se não o for, qual o modelo que acha que é melhor?
+
+```{r}
+(auto.arima(wmurders))
+```
+Não dá o mesmo modelo, e ele também não é melhor
+
+3. Considere os dados austourists (package: fpp2), o total de dormidas, por trimestres, de turistas internacionais na Austrália para o período 1999-2015.
+
+a) Separe os últimos 2 anos e coloque-os num objecto designado por aus.test. Os restantes coloque em aus.train.
+
+```{r}
+autoplot(austourists)
+```
+
+```{r}
+tail(austourists)
+```
+
+
+```{r}
+aus.treino <- window(austourists, end = c(2013,4))
+aus.teste <- window(austourists, start = c(2014,1))
+length(aus.treino)
+length(aus.teste)
+```
+
+
+b) Represente os dados de treino graficamente e comente.
+
+```{r}
+autoplot(aus.treino)
+```
+
+
+c) Será que os dados precisam de ser transformados? Em caso afirmativo, encontrar uma transformação adequada.
+
+Não há necessidade
+
+d) O que podemos observar no gráfico ACF?
+
+```{r}
+ggAcf(aus.treino)
+```
+O decaimento lento da ACF é típico de séries não estacionárias. Picos regulares em lags 4, 8, 12, 16 sugerem um ciclo sazonal
+
+e) O que podemos observar no gráfico PACF?
+
+```{r}
+ggPacf(aus.treino)
+```
+
+Pico significativo apenas no Lag 4, PACF indica um componente AR sazonal
+
+f) Use a função auto.arima() para ajustar um modelo aos dados.
+
+```{r}
+(auto.aus <- auto.arima(aus.treino))
+```
+
+g) Use a função ets() para ajustar um modelos aos dados.
+
+```{r}
+ets.aus <- ets(aus.treino)
+```
+
+h) Através de qual dos modelos se obtem o melhor ajuste? Use a medida de erro RMSE.
+
+```{r}
+accuracy(ets.aus)[,c("RMSE")]
+accuracy(auto.aus)[,c("RMSE")]
+```
+ETS é o melhor modelo para aus.treino segundo o RMSE.
+
+i) Obtenha as previsões para ambos os modelos. Será que o melhor modelo é também aquele cujas previsões são as mais próximas dos valores reais (dados de teste)? Use a medida de erro RMSE.
+
+```{r}
+for.ets <- forecast(ets.aus, h = 8)$mean
+for.arima <- forecast(auto.aus, h = 8)$mean
+```
+
+```{r}
+accuracy(for.ets, aus.teste)[,c("RMSE")]
+accuracy(for.arima, aus.teste)[,c("RMSE")]
+```
+
+Na validação dentro da amostra, o ETS era melhor.
+
+Nos dados de teste, o ARIMA teve menor erro.
+
+4. Considere os dados usmelec(package: fpp2), a produção mensal de electricidade (em mil milhões de kilowatts-hora) no período de Janeiro de 1973 - Junho de 2013.
+
+a) Represente os dados graficamente e comente.
+
+```{r}
+autoplot(usmelec)
+```
+
+A série claramente não é estacionária devido à tendência marcante. Sugere-se diferenciação para análise posterior.
+
+b) Use um gráfico adequado para observar em que periodo(s) há maior produção de electricidade.
+
+```{r}
+ggseasonplot(usmelec)
+```
+
+Os meses de maior uso de energia, como natural, são os do verão do hemisfério norte, julho e agosto
+
+c) Examine a média móvel de 12 meses desta série para ver que tipo de tendência está envolvida.
+
+```{r}
+media_movel <- ma(usmelec, order = 12)
+autoplot(media_movel) +
+  labs(title = "Média Móvel de 12 Meses", y = "Valor")
+```
+
+
+d) Será que os dados precisam de ser transformados? Em caso afirmativo, encontre uma transformação adequada.
+
+```{r}
+lambda <- BoxCox.lambda(usmelec) 
+bc.usmelec <- BoxCox(usmelec, lambda)
+```
+
+```{r}
+autoplot(bc.usmelec)
+```
+
+
+e) Será que os dados estão estacionários? Se não, encontre uma diferenciação adequada que produza dados estacionários.
+
+```{r}
+nsdiffs(bc.usmelec)
+```
+
+```{r}
+diff.bc.usmelec <- diff(bc.usmelec)
+```
+
+```{r}
+adf.test(diff.bc.usmelec)
+```
+
+Já está estácionária
+
+```{r}
+autoplot(diff.bc.usgdp)
+```
+
+
+f) Identificar alguns modelos ARIMA que possam ser úteis na descrição das séries temporais. Qual dos seus modelos é o melhor de acordo com os seus valores do critério de AIC?
+
+```{r}
+tsdisplay(usmelec)
+```
+
+```{r}
+nsdiffs(usmelec)
+```
+
+```{r}
+(usmelec.111 <- Arima(usmelec, order = c(1,1,1))) #Melhor
+```
+
+```{r}
+(usmelec.112 <- Arima(usmelec, order = c(1,1,2)))
+```
+
+```{r}
+(usmelec.211 <- Arima(usmelec, order = c(2,1,1)))
+```
+
+```{r}
+(usmelec.212 <- Arima(usmelec, order = c(2,1,2)))
+```
+
+g) Faça uma estimativa dos parâmetros para o seu melhor modelo e faça um diagnóstico aos resíduos. Os resíduos assemelham-se ao ruído branco? Se não, tente encontrar outro modelo ARIMA que se adapte melhor.
+
+```{r}
+summary(usmelec.111)
+```
+
+```{r}
+checkresiduals(usmelec.111)
+```
+
+É, os resíduos são ruído branco
+
+h) Obtenha as previsões para os próximos 15 anos de produção de electricidade.
+
+```{r}
+forecast_15anos <- forecast(usmelec.111, h = 15)
+```
+
+```{r}
+autoplot(usmelec) +
+  autolayer(forecast_15anos$mean)
+  labs(title = "Previsão para os Próximos 15 Anos",
+       x = "Tempo",
+       y = "Produção de Eletricidade") +
+  theme_minimal()
+```
+
+
+5. Considere os dados mcopper (package: expsmooth)
+
+a) Se necessário, encontre uma transformação Box-Cox adequada para os dados.
+
+```{r}
+autoplot(mcopper)
+```
+
+b) Ajuste um modelo ARIMA adequado aos dados transformados utilizando a função auto.arima().
+
+```{r}
+(auto.mcopper <- auto.arima(mcopper))
+```
+
+
+c) Experimente outros modelos plausíveis, experimentando as ordens escolhidas.
+
+```{r}
+(m1 <- Arima(mcopper, order = c(1,1,0)))
+```
+
+```{r}
+(m2 <- Arima(mcopper, order = c(1,1,1)))
+```
+
+```{r}
+(m3 <- Arima(mcopper, order = c(0,1,2)))
+```
+
+```{r}
+(m4 <- Arima(mcopper, order = c(2,1,0)))
+```
+
+d) Escolha o que pensa ser o melhor modelo e efetue um diagnóstico aos residuos.
+
+```{r}
+checkresiduals(auto.mcopper$residuals)
+```
+
+Os resíduos não são ruído branco
+
+e) Considerando este modelo, obtenha previsões. Acha que as previsões são razoáveis?
+
+```{r}
+forecast_arima <- forecast(auto.mcopper, h = 15)
+autoplot(mcopper) +
+  autolayer(forecast_arima$mean, series = "arima")
+  labs(title = "Previsão ARIMA(0,1,1) para mcopper")
+```
+
+
+f) Compare os resultados com os que obteria utilizando a função ets() (sem transformação).
+
+```{r}
+modelo_ets <- ets(mcopper)
+summary(modelo_ets)
+checkresiduals(modelo_ets)
+
+forecast_ets <- forecast(modelo_ets, h = 15)
+autoplot(forecast_ets)
+```
+

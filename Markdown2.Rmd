@@ -951,9 +951,14 @@ accuracy(auto.aus)[,c("RMSE")]
 i) Obtenha as previsões para ambos os modelos. Será que o melhor modelo é também aquele cujas previsões são as mais próximas dos valores reais (dados de teste)? Use a medida de erro RMSE.
 
 ```{r}
-
+for.ets <- forecast(ets.aus, h = 8)$mean
+for.arima <- forecast(auto.aus, h = 8)$mean
 ```
 
+```{r}
+accuracy(for.ets, aus.teste)[,c("RMSE")]
+accuracy(for.arima, aus.teste)[,c("RMSE")]
+```
 
 
 
