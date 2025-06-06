@@ -1,0 +1,407 @@
+---
+title: "MiniFicha2Certo"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(fpp2)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+load("C:/PENTES/e_redes_work/consola_e_redes.RData")
+```
+
+```{r}
+h = 11
+
+VRSA.treino <- window(ts.VRSA, end = c(2023,12))
+VRSA.teste <-window(ts.VRSA, start= c(2024,1))
+class(VRSA.teste)
+length(VRSA.teste)
+```
+
+1) Aplique os métodos de decomposição clássica aos dados de treino. Para o melhor ajustamento, obtenha as previsões h.
+
+Vila Real de Santo Antônio
+
+```{r}
+VRSA.treino.decA <- decompose(VRSA.treino, type = "additive")
+VRSA.treino.decM <- decompose(VRSA.treino, type = "multi")
+
+VRSA.decA.ajust <- VRSA.treino.decA$seasonal + VRSA.treino.decA$trend
+VRSA.decM.ajust <- VRSA.treino.decM$seasonal * VRSA.treino.decM$trend
+
+accuracy(VRSA.decA.ajust, VRSA.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.decM.ajust, VRSA.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo as Medidas de Erro, o mais adequado é seguir com a decomposição Multiplicativa
+
+```{r}
+st.VRSA <- VRSA.treino.decM$seasonal
+at.VRSA <- seasadj(VRSA.treino.decM)
+
+prev.st.VRSA <- snaive(st.VRSA, h)$mean
+
+prev.at.naive.VRSA <- snaive(at.VRSA, h)$mean
+prev.at.meanf.VRSA <- meanf(at.VRSA, h)$mean
+prev.at.drift.VRSA <- rwf(at.VRSA, h, drift = TRUE)$mean
+
+prev.naive.VRSA <- prev.st.VRSA * prev.at.naive.VRSA
+prev.meanf.VRSA <- prev.st.VRSA * prev.at.meanf.VRSA
+prev.drift.VRSA <- prev.st.VRSA * prev.at.drift.VRSA
+
+accuracy(prev.naive.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro, unanimamente a melhor previsão foi a Meanf + Seasonal Naive
+
+2) Aplique o método de decomposição de Lonss aos dados de treino, com as janelas sazonais definidas s.window="periodic", 7 e 13. Para o melhor ajustamento, obtenha as previsões h.
+
+Vila Real de Santo Antônio
+
+```{r}
+rob.VRSA = test.Outliers.STL(ts.VRSA.treino)
+
+VRSA.treino.peri <- stl(ts.VRSA.treino, s.window = "periodic", robust = rob.VRSA)
+VRSA.treino.7 <- stl(ts.VRSA.treino, s.window = 7, robust = rob.VRSA)
+VRSA.treino.13 <- stl(ts.VRSA.treino, s.window = 13, robust = rob.VRSA)
+
+VRSA.peri.ajust <- ts.VRSA.treino - remainder(VRSA.treino.peri)
+VRSA.7.ajust <- ts.VRSA.treino - remainder(VRSA.treino.7)
+VRSA.13.ajust <- ts.VRSA.treino - remainder(VRSA.treino.13)
+
+accuracy(VRSA.peri.ajust, ts.VRSA.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.7.ajust, ts.VRSA.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.13.ajust, ts.VRSA.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo as medidas de erro o idal é proseguir com o windown = 13
+
+```{r}
+st.VRSA <- VRSA.treino.13$time.series[, "seasonal"]
+at.VRSA <- seasadj(VRSA.treino.13)
+
+prev.st.VRSA <- snaive(st.VRSA, h)$mean
+
+prev.at.naive.VRSA <- snaive(at.VRSA, h)$mean
+prev.at.meanf.VRSA <- meanf(at.VRSA, h)$mean
+prev.at.drift.VRSA <- rwf(at.VRSA, h, drift = TRUE)$mean
+
+prev.naive.VRSA.13 <- prev.st.VRSA + prev.at.naive.VRSA
+prev.meanf.VRSA.13 <- prev.st.VRSA + prev.at.meanf.VRSA
+prev.drift.VRSA.13 <- prev.st.VRSA + prev.at.drift.VRSA
+
+accuracy(prev.naive.VRSA.13, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.VRSA.13, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.VRSA.13, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro a melhor escolha seria o Meanf + Snaive
+
+3) Represente graficamente os dados de teste e as previsões obtidas em 1e 2. Comente
+
+```{r}
+autoplot(ts.VRSA, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparacao entre Loess e os dados de Vila Real de Santo Antonio")+
+  autolayer(prev.meanf.VRSA, series = "Meanf DecM")+
+  autolayer(prev.drift.VRSA.13, series = "13 window Meanf")
+```
+
+Bispo
+
+```{r}
+h = 11
+
+Bispo.treino <- window(ts.Bispo, end = c(2023,12))
+Bispo.teste <-window(ts.Bispo, start= c(2024,1))
+class(Bispo.teste)
+length(Bispo.teste)
+```
+
+1) Aplique os métodos de decomposição clássica aos dados de treino. Para o melhor ajustamento, obtenha as previsões h.
+
+
+```{r}
+Bispo.treino.decA <- decompose(Bispo.treino, type = "additive")
+Bispo.treino.decM <- decompose(Bispo.treino, type = "multiplicative")
+
+Bispo.decA.ajust <- Bispo.treino.decA$seasonal + Bispo.treino.decA$trend
+Bispo.decM.ajust <- Bispo.treino.decM$seasonal * Bispo.treino.decM$trend
+
+accuracy(Bispo.decA.ajust, Bispo.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.decM.ajust, Bispo.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo as Medidas de Erro, o mais adequado é seguir com a decomposição Aditivo
+
+```{r}
+st.Bispo <- Bispo.treino.decA$seasonal
+at.Bispo <- seasadj(Bispo.treino.decM)
+
+prev.st.Bispo <- snaive(st.Bispo, h)$mean
+
+prev.at.naive.Bispo <- snaive(at.Bispo, h)$mean
+prev.at.meanf.Bispo <- meanf(at.Bispo, h)$mean
+prev.at.drift.Bispo <- rwf(at.Bispo, h, drift = TRUE)$mean
+
+prev.naive.Bispo <- prev.st.Bispo + prev.at.naive.Bispo
+prev.meanf.Bispo <- prev.st.Bispo + prev.at.meanf.Bispo
+prev.drift.Bispo <- prev.st.Bispo + prev.at.drift.Bispo
+
+accuracy(prev.naive.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro, unanimamente a melhor previsão foi a Meanf + Seasonal Naive
+
+2) Aplique o método de decomposição de Lonss aos dados de treino, com as janelas sazonais definidas s.window="periodic", 7 e 13. Para o melhor ajustamento, obtenha as previsões h.
+
+Vila Real de Santo Antônio
+
+```{r}
+rob.Bispo = test.Outliers.STL(ts.Bispo.treino)
+
+Bispo.treino.peri <- stl(ts.Bispo.treino, s.window = "periodic", robust = rob.Bispo)
+Bispo.treino.7 <- stl(ts.Bispo.treino, s.window = 7, robust = rob.Bispo)
+Bispo.treino.13 <- stl(ts.Bispo.treino, s.window = 13, robust = rob.Bispo)
+
+Bispo.peri.ajust <- ts.Bispo.treino - remainder(Bispo.treino.peri)
+Bispo.7.ajust <- ts.Bispo.treino - remainder(Bispo.treino.7)
+Bispo.13.ajust <- ts.Bispo.treino - remainder(Bispo.treino.13)
+
+accuracy(Bispo.peri.ajust, ts.Bispo.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.7.ajust, ts.Bispo.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.13.ajust, ts.Bispo.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo as medidas de erro o idal é proseguir com o windown = 7
+
+```{r}
+st.Bispo <- Bispo.treino.7$time.series[, "seasonal"]
+at.Bispo <- seasadj(Bispo.treino.13)
+
+prev.st.Bispo <- snaive(st.Bispo, h)$mean
+
+prev.at.naive.Bispo <- snaive(at.Bispo, h)$mean
+prev.at.meanf.Bispo <- meanf(at.Bispo, h)$mean
+prev.at.drift.Bispo <- rwf(at.Bispo, h, drift = TRUE)$mean
+
+prev.naive.Bispo.7 <- prev.st.Bispo + prev.at.naive.Bispo
+prev.meanf.Bispo.7 <- prev.st.Bispo + prev.at.meanf.Bispo
+prev.drift.Bispo.7 <- prev.st.Bispo + prev.at.drift.Bispo
+
+accuracy(prev.naive.Bispo.7, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Bispo.7, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.Bispo.7, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro a melhor escolha seria o Meanf + Snaive
+
+3) Represente graficamente os dados de teste e as previsões obtidas em 1e 2. Comente
+
+```{r}
+autoplot(ts.Bispo, xlab = "Tempo", ylab = "Consumo de Energia") +
+  autolayer(prev.meanf.Bispo, series = "Meanf DecA") +
+  autolayer(prev.naive.Bispo.7, series = "Meanf STL 7")
+```
+
+Tavira
+
+```{r}
+h = 11
+
+Tavira.treino <- window(ts.Tavira, end = c(2023,12))
+Tavira.teste <- window(ts.Tavira, start= c(2024,1))
+class(Tavira.teste)
+length(Tavira.teste)
+```
+
+1) Aplique os métodos de decomposição clássica aos dados de treino. Para o melhor ajustamento, obtenha as previsões h.
+
+
+```{r}
+Tavira.treino.decA <- decompose(Tavira.treino, type = "additive")
+Tavira.treino.decM <- decompose(Tavira.treino, type = "multiplicative")
+
+Tavira.decA.ajust <- Tavira.treino.decA$seasonal + Tavira.treino.decA$trend
+Tavira.decM.ajust <- Tavira.treino.decM$seasonal * Tavira.treino.decM$trend
+
+accuracy(Tavira.decA.ajust, Tavira.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.decM.ajust, Tavira.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo as Medidas de Erro, o mais adequado é seguir com a decomposição Aditivo
+
+```{r}
+st.Tavira <- Tavira.treino.decA$seasonal
+at.Tavira <- seasadj(Tavira.treino.decM)
+
+prev.st.Tavira <- snaive(st.Tavira, h)$mean
+
+prev.at.naive.Tavira <- snaive(at.Tavira, h)$mean
+prev.at.meanf.Tavira <- meanf(at.Tavira, h)$mean
+prev.at.drift.Tavira <- rwf(at.Tavira, h, drift = TRUE)$mean
+
+prev.naive.Tavira <- prev.st.Tavira + prev.at.naive.Tavira
+prev.meanf.Tavira <- prev.st.Tavira + prev.at.meanf.Tavira
+prev.drift.Tavira <- prev.st.Tavira + prev.at.drift.Tavira
+
+accuracy(prev.naive.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro, unanimamente a melhor previsão foi a naive + Seasonal Naive
+
+2) Aplique o método de decomposição de Lonss aos dados de treino, com as janelas sazonais definidas s.window="periodic", 7 e 13. Para o melhor ajustamento, obtenha as previsões h.
+
+```{r}
+rob.Tavira = test.Outliers.STL(ts.Tavira.treino)
+
+Tavira.treino.peri <- stl(ts.Tavira.treino, s.window = "periodic", robust = rob.Tavira)
+Tavira.treino.7 <- stl(ts.Tavira.treino, s.window = 7, robust = rob.Tavira)
+Tavira.treino.13 <- stl(ts.Tavira.treino, s.window = 13, robust = rob.Tavira)
+
+Tavira.peri.ajust <- ts.Tavira.treino - remainder(Tavira.treino.peri)
+Tavira.7.ajust <- ts.Tavira.treino - remainder(Tavira.treino.7)
+Tavira.13.ajust <- ts.Tavira.treino - remainder(Tavira.treino.13)
+
+accuracy(Tavira.peri.ajust, ts.Tavira.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.7.ajust, ts.Tavira.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.13.ajust, ts.Tavira.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo as medidas de erro o idal é proseguir com o windown = 7
+
+```{r}
+st.Tavira <- Tavira.treino.7$time.series[, "seasonal"]
+at.Tavira <- seasadj(Tavira.treino.13)
+
+prev.st.Tavira <- snaive(st.Tavira, h)$mean
+
+prev.at.naive.Tavira <- snaive(at.Tavira, h)$mean
+prev.at.meanf.Tavira <- meanf(at.Tavira, h)$mean
+prev.at.drift.Tavira <- rwf(at.Tavira, h, drift = TRUE)$mean
+
+prev.naive.Tavira.7 <- prev.st.Tavira + prev.at.naive.Tavira
+prev.meanf.Tavira.7 <- prev.st.Tavira + prev.at.meanf.Tavira
+prev.drift.Tavira.7 <- prev.st.Tavira + prev.at.drift.Tavira
+
+accuracy(prev.naive.Tavira.7, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Tavira.7, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.Tavira.7, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+
+```
+
+De acordo com as medidas de erro a melhor escolha seria o Meanf + Snaive
+
+3) Represente graficamente os dados de teste e as previsões obtidas em 1e 2. Comente
+
+```{r}
+autoplot(ts.Tavira, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação entre Loess e Decomposição Clássica - Tavira") +
+  autolayer(prev.naive.Tavira, series = "Meanf DecA") +
+  autolayer(prev.meanf.Tavira.7, series = "Meanf STL 7")
+```
+
+Silves
+
+```{r}
+h = 11
+
+Silves.treino <- window(ts.Silves, end = c(2023,12))
+Silves.teste <- window(ts.Silves, start= c(2024,1))
+class(Silves.teste)
+length(Silves.teste)
+```
+
+1) Aplique os métodos de decomposição clássica aos dados de treino. Para o melhor ajustamento, obtenha as previsões h.
+
+
+```{r}
+Silves.treino.decA <- decompose(Silves.treino, type = "additive")
+Silves.treino.decM <- decompose(Silves.treino, type = "multiplicative")
+
+Silves.decA.ajust <- Silves.treino.decA$seasonal + Silves.treino.decA$trend
+Silves.decM.ajust <- Silves.treino.decM$seasonal * Silves.treino.decM$trend
+
+accuracy(Silves.decA.ajust, Silves.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.decM.ajust, Silves.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo as Medidas de Erro, o mais adequado é seguir com a decomposição Aditivo
+
+```{r}
+st.Silves <- Silves.treino.decA$seasonal
+at.Silves <- seasadj(Silves.treino.decM)
+
+prev.st.Silves <- snaive(st.Silves, h)$mean
+
+prev.at.naive.Silves <- snaive(at.Silves, h)$mean
+prev.at.meanf.Silves <- meanf(at.Silves, h)$mean
+prev.at.drift.Silves <- rwf(at.Silves, h, drift = TRUE)$mean
+
+prev.naive.Silves <- prev.st.Silves + prev.at.naive.Silves
+prev.meanf.Silves <- prev.st.Silves + prev.at.meanf.Silves
+prev.drift.Silves <- prev.st.Silves + prev.at.drift.Silves
+
+accuracy(prev.naive.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro, unanimamente a melhor previsão foi a drift + Seasonal Naive
+
+2) Aplique o método de decomposição de Lonss aos dados de treino, com as janelas sazonais definidas s.window="periodic", 7 e 13. Para o melhor ajustamento, obtenha as previsões h.
+
+```{r}
+rob.Silves = test.Outliers.STL(ts.Silves.treino)
+
+Silves.treino.peri <- stl(ts.Silves.treino, s.window = "periodic", robust = rob.Silves)
+Silves.treino.7 <- stl(ts.Silves.treino, s.window = 7, robust = rob.Silves)
+Silves.treino.13 <- stl(ts.Silves.treino, s.window = 13, robust = rob.Silves)
+
+Silves.peri.ajust <- ts.Silves.treino - remainder(Silves.treino.peri)
+Silves.7.ajust <- ts.Silves.treino - remainder(Silves.treino.7)
+Silves.13.ajust <- ts.Silves.treino - remainder(Silves.treino.13)
+
+accuracy(Silves.peri.ajust, ts.Silves.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.7.ajust, ts.Silves.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.13.ajust, ts.Silves.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo as medidas de erro o idal é proseguir com o windown = 7
+
+```{r}
+st.Silves <- Silves.treino.7$time.series[, "seasonal"]
+at.Silves <- seasadj(Silves.treino.13)
+
+prev.st.Silves <- snaive(st.Silves, h)$mean
+
+prev.at.naive.Silves <- snaive(at.Silves, h)$mean
+prev.at.meanf.Silves <- meanf(at.Silves, h)$mean
+prev.at.drift.Silves <- rwf(at.Silves, h, drift = TRUE)$mean
+
+prev.naive.Silves.7 <- prev.st.Silves + prev.at.naive.Silves
+prev.meanf.Silves.7 <- prev.st.Silves + prev.at.meanf.Silves
+prev.drift.Silves.7 <- prev.st.Silves + prev.at.drift.Silves
+
+accuracy(prev.naive.Silves.7, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Silves.7, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.Silves.7, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro a melhor escolha seria o Naive + Snaive
+
+3) Represente graficamente os dados de teste e as previsões obtidas em 1e 2. Comente
+
+```{r}
+autoplot(ts.Silves, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação entre Loess e Decomposição Clássica - Silves") +
+  autolayer(prev.drift.Silves, series = "Meanf DecA") +
+  autolayer(prev.naive.Silves.7, series = "Meanf STL 7")
+```

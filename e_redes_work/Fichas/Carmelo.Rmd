@@ -1,0 +1,405 @@
+---
+title: "**Resolução do Teste**"
+author: "Thomaz Rodrigues Lima a90985"
+fontsize: 14pt
+#output: pdf_document
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(fpp2)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+load("C:/PENTES/e_redes_work/consola_e_redes.RData")
+
+```
+
+13-16, meus dados
+
+```{r}
+VRSA<-Dados_Faro |>
+  filter(Concelho == "Vila Real de Santo António") |>
+  select(-Concelho)
+
+Bispo<-Dados_Faro |>
+  filter(Concelho == "Vila do Bispo") |>
+  select(-Concelho)
+
+Tavira<-Dados_Faro |>
+  filter(Concelho == "Tavira") |>
+  select(-Concelho)
+
+Silves<-Dados_Faro |>
+  filter(Concelho == "Silves") |>
+  select(-Concelho)
+
+VRSA$Data <- trimws(VRSA$Data)
+VRSA$DataDay <- paste0(VRSA$Data, "-01")
+VRSA$DataDay<- as.Date(VRSA$DataDay, format = "%Y-%m-%d")
+VRSA <- VRSA |>
+  select(-Data) |>
+  arrange(DataDay) 
+VRSA <- VRSA |>
+  group_by(DataDay) |>
+  mutate(Consumo = mean(Energia)) |>
+  distinct(DataDay, Consumo)
+
+Bispo$Data <- trimws(Bispo$Data)
+Bispo$DataDay <- paste0(Bispo$Data, "-01")
+Bispo$DataDay<- as.Date(Bispo$DataDay, format = "%Y-%m-%d")
+Bispo <- Bispo |>
+  select(-Data) |>
+  arrange(DataDay) 
+Bispo <- Bispo |>
+  group_by(DataDay) |>
+  mutate(Consumo = mean(Energia)) |>
+  distinct(DataDay, Consumo)
+
+Tavira$Data <- trimws(Tavira$Data)
+Tavira$DataDay <- paste0(Tavira$Data, "-01")
+Tavira$DataDay<- as.Date(Tavira$DataDay, format = "%Y-%m-%d")
+Tavira <- Tavira |>
+  select(-Data) |>
+  arrange(DataDay) 
+Tavira <- Tavira |>
+  group_by(DataDay) |>
+  mutate(Consumo = mean(Energia)) |>
+  distinct(DataDay, Consumo)
+
+Silves$Data <- trimws(Silves$Data)
+Silves$DataDay <- paste0(Silves$Data, "-01")
+Silves$DataDay<- as.Date(Silves$DataDay, format = "%Y-%m-%d")
+Silves <- Silves |>
+  select(-Data) |>
+  arrange(DataDay) 
+Silves <- Silves |>
+  group_by(DataDay) |>
+  mutate(Consumo = mean(Energia)) |>
+  distinct(DataDay, Consumo)
+```
+
+```{r}
+ts.VRSA <- ts(VRSA$Consumo, start = c(2020,11), frequency = 12)
+ts.Bispo <- ts(Bispo$Consumo, start = c(2020,11), frequency = 12)
+ts.Tavira <- ts(Tavira$Consumo, start = c(2020,11), frequency = 12)
+ts.Silves <- ts(Silves$Consumo, start = c(2020,11), frequency = 12)
+```
+
+## Questão 1
+
+```{r}
+autoplot(ts.VRSA, xlab = "Tempo", ylab = "Consumo de Energia", main = "Consumo de Energia em Vila Real de Santo Antônio")
+```
+
+Com relação ao consumo de energia de Vila Real de Santo Antônio podemos observar uma sazonalidade muito proeminte. Com relação a tendência, podemos observar um leve, mas muito leve, crescimento anual.
+
+```{r}
+autoplot(ts.Bispo, xlab = "Tempo", ylab = "Consumo de Energia", main = "Consumo de Energia em Vila do Bispo")
+```
+
+Comentando sobre Vila do Bispo podemos observar que não há uma sazonalidade tão bem demarcada, muito menos uma tendência forte. Quando observamos podemos ver que a série sofre de uma grande variação nos seus dados ao longo do período.
+
+```{r}
+autoplot(ts.Tavira, xlab = "Tempo", ylab = "Consumo de Energia", main = "Consumo de Energia em Tavira")
+```
+
+Tavira por outro lado possui sim um componente sazonal bastante visível aos olhos, variando ao longo dos anos a amplitude entre os dados. Outrossim, não podemos dizer que há uma tendência demarcada.
+
+```{r}
+autoplot(ts.Silves, xlab = "Tempo", ylab = "Consumo de Energia", main = "Consumo de Energia em Silves")
+```
+
+Por último, mas não menos importante podemos observar Silves, que assim como Tavria tem uma sazonalidade bastante demarcada em primeira vista. Porém ao contrário de sua vizinha, Silves apresenta uma leve tendência positiva ao longo dos anos.
+
+## Questão 2
+
+```{r}
+ggseasonplot(ts.VRSA, main = "Consumo Sazonal de Energia em Vila Real de Santo Antônio", xlab = "Mês")
+```
+
+Com execessão de 2021, em Vila Real de Santo Antônio, podemos observar uma sobreposição dos dados quase perfeita dos dados, o que denota um componente sazonal bastante forte. Mas vale ressaltar o mês de agosto, que representa sucessivos aumentos ao longo de 2020 e 2024 (Mais uma vez excluindo 2021).
+
+```{r}
+ggseasonplot(ts.Bispo, main = "Consumo Sazonal de Energia em Vila do Bispo", xlab = "Mês")
+```
+
+Tal qual Vila Real, a Vila do Bispo também apresenta em 2021 um comportamento quase que anômalo com relação ao restante dos anos na série, em especial no começo do ano, onde a diferença é bastante notória. Com relação aos outros meses também podemos observar uma sazonalidade mais fraca em relação a anterior e com uma leve queda de consumo nos últimos anos.
+
+```{r}
+ggseasonplot(ts.Tavira, main = "Consumo Sazonal de Energia em Tavira", xlab = "Mês")
+```
+
+Em Tavira podemos observar que com os consumos mensais, em especial nos meses pós agosto são muito parecidos, e parecem lentamente convergir mais com o passar do tempo, dado a proximidade dos dados pós 2021.
+
+```{r}
+ggseasonplot(ts.Silves, main = "Consumo Sazonal de Energia em Silves", xlab = "Mês")
+```
+
+Em Silves, tal qual a maioria dos Demais podemos observar de forma clara como a sazonalidade é bastante demarcada, em especial após 2021.
+
+## Questão 3
+
+### Vila Real de Santo Antônio
+
+```{r}
+VRSA.decA <- decompose(ts.VRSA, type = "additive")
+VRSA.decM <- decompose(ts.VRSA, type = "multi")
+```
+
+```{r}
+autoplot(VRSA.decA)
+```
+
+```{r}
+autoplot(VRSA.decM)
+```
+
+### Vila do Bispo
+
+```{r}
+Bispo.decA <- decompose(ts.Bispo, type = "additive")
+Bispo.decM <- decompose(ts.Bispo, type = "multi")
+```
+
+```{r}
+autoplot(Bispo.decA)
+```
+
+```{r}
+autoplot(Bispo.decM)
+```
+
+### Tavira
+
+```{r}
+Tavira.decA <- decompose(ts.Tavira, type = "additive")
+Tavira.decM <- decompose(ts.Tavira, type = "multi")
+```
+
+```{r}
+autoplot(Tavira.decA)
+```
+
+```{r}
+autoplot(Tavira.decM)
+```
+
+### Silves
+
+```{r}
+Silves.decA <- decompose(ts.Silves, type = "additive")
+Silves.decM <- decompose(ts.Silves, type = "multi")
+```
+
+```{r}
+autoplot(Silves.decA)
+```
+
+```{r}
+autoplot(Silves.decM)
+```
+
+## Questão 4
+
+### Vila Real de Santo Antônio
+
+```{r}
+VRSA.decA$seasonal
+```
+
+```{r}
+VRSA.decM$seasonal
+```
+
+Com base nas observações dos dois diferentes métodos, o mês que possui o menor consumo de Energia é Abril. Outrossim, o mês que possui o maior consumo é Agosto
+
+### Vila do Bispo
+
+```{r}
+Bispo.decA$seasonal
+```
+
+```{r}
+Bispo.decM$seasonal
+```
+
+Vila do Bispo, por outro lado tem como Fevereiro o mês que menos consome energia. Por outro lado, o mês que tem o maior consumo é Agosto
+
+### Tavira
+
+```{r}
+Tavira.decA$seasonal
+```
+
+```{r}
+Tavira.decM$seasonal
+```
+
+Tavira tem como seu mês de menor Consumo Abril e o mês de maior consumo sendo Agosto
+
+### Silves
+
+```{r}
+Silves.decA$seasonal
+```
+
+```{r}
+Silves.decM$seasonal
+```
+
+Fevereiro é o mês de menor consumo em Silves, e assim como os demais, agosto é o mês de maior consumo de Energia.
+
+## Questão 5
+
+### Vila Real de Santo Antônio
+
+```{r}
+VRSA.peri <- stl(ts.VRSA, s.window = "periodic")
+VRSA.7 <- stl(ts.VRSA, s.window = 7)
+VRSA.14 <- stl(ts.VRSA, s.window = 14)
+
+VRSA.aj.peri <- VRSA.peri$time.series[,"seasonal"]+VRSA.peri$time.series[,"trend"]
+VRSA.aj.7 <- VRSA.7$time.series[,"seasonal"]+VRSA.7$time.series[,"trend"]
+VRSA.aj.14 <- VRSA.14$time.series[,"seasonal"]+VRSA.14$time.series[,"trend"]
+```
+
+### Vila do Bispo
+
+```{r}
+Bispo.peri <- stl(ts.Bispo, s.window = "periodic")
+Bispo.7 <- stl(ts.Bispo, s.window = 7)
+Bispo.14 <- stl(ts.Bispo, s.window = 14)
+
+Bispo.aj.peri <- Bispo.peri$time.series[,"seasonal"]+Bispo.peri$time.series[,"trend"]
+Bispo.aj.7 <- Bispo.7$time.series[,"seasonal"]+Bispo.7$time.series[,"trend"]
+Bispo.aj.14 <- Bispo.14$time.series[,"seasonal"]+Bispo.14$time.series[,"trend"]
+```
+
+### Tavira
+
+```{r}
+Tavira.peri <- stl(ts.Tavira, s.window = "periodic")
+Tavira.7 <- stl(ts.Tavira, s.window = 7)
+Tavira.14 <- stl(ts.Tavira, s.window = 14)
+
+Tavira.aj.peri <- Tavira.peri$time.series[,"seasonal"]+Tavira.peri$time.series[,"trend"]
+Tavira.aj.7 <- Tavira.7$time.series[,"seasonal"]+Tavira.7$time.series[,"trend"]
+Tavira.aj.14 <- Tavira.14$time.series[,"seasonal"]+Tavira.14$time.series[,"trend"]
+```
+
+### Silves
+
+```{r}
+Silves.peri <- stl(ts.Silves, s.window = "periodic")
+Silves.7 <- stl(ts.Silves, s.window = 7)
+Silves.14 <- stl(ts.Silves, s.window = 14)
+
+Silves.aj.peri <- Silves.peri$time.series[,"seasonal"]+Silves.peri$time.series[,"trend"]
+Silves.aj.7 <- Silves.7$time.series[,"seasonal"]+Silves.7$time.series[,"trend"]
+Silves.aj.14 <- Silves.14$time.series[,"seasonal"]+Silves.14$time.series[,"trend"]
+```
+
+### Questão 6
+
+```{r}
+autoplot(ts.VRSA, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação entre Loess e os dados de Vila Real de Santo Antônio")+
+  autolayer(VRSA.aj.peri, series = "periodic")+
+  autolayer(VRSA.aj.7, series = "7 window")+
+  autolayer(VRSA.aj.14, series = "14 window")
+```
+
+A priori os dados com o "window=7", parecem mais adequados
+
+```{r}
+autoplot(ts.Bispo, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação entre Loess e os dados de Vila do Bispo")+
+  autolayer(Bispo.aj.peri, series = "periodic")+
+  autolayer(Bispo.aj.7, series = "7 window")+
+  autolayer(Bispo.aj.14, series = "14 window")
+```
+
+Realmente difícil de dizer, mas mais uma vez o Periodic parece vizualmente mais adequado
+
+```{r}
+autoplot(ts.Tavira, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação entre Loess e os dados de Tavira")+
+  autolayer(Tavira.aj.peri, series = "periodic")+
+  autolayer(Tavira.aj.7, series = "7 window")+
+  autolayer(Tavira.aj.14, series = "14 window")
+```
+
+O periodic parece se encaixar bem
+
+```{r}
+autoplot(ts.Silves, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação entre Loess e os dados de Silves")+
+  autolayer(Silves.aj.peri, series = "periodic")+
+  autolayer(Silves.aj.7, series = "7 window")+
+  autolayer(Silves.aj.14, series = "14 window")
+```
+
+Mais uma vez o 14 parece mais adequado vizualmente falando
+
+## Questão 7
+
+### Vila Real de Santo Antônio
+
+```{r}
+accuracy(VRSA.aj.peri, ts.VRSA)[,c("MAE")]
+accuracy(VRSA.aj.7, ts.VRSA)[,c("MAE")]
+accuracy(VRSA.aj.14, ts.VRSA)[,c("MAE")]
+```
+
+Tomando como Base o MAE a melhor escolha seria a window=7, devido ao seu valor mais baixo
+
+### vila do Bispo
+
+```{r}
+accuracy(Bispo.aj.peri, ts.Bispo)[,c("MAE")]
+accuracy(Bispo.aj.7, ts.Bispo)[,c("MAE")]
+accuracy(Bispo.aj.14, ts.Bispo)[,c("MAE")]
+```
+
+A escolha do melhor ajuste para a vila do Bispo, tal qual o da Vila Real de Santo Antônio vai para o 7, pois sua medida de erro tomando como base o MAE é menor.
+
+### Tavira
+
+```{r}
+accuracy(Tavira.aj.peri, ts.Tavira)[,c("MAE")]
+accuracy(Tavira.aj.7, ts.Tavira)[,c("MAE")]
+accuracy(Tavira.aj.14, ts.Tavira)[,c("MAE")]
+```
+
+Mais uma vez o window 7 se mostra o mais adequado, por possuir um MAE menor
+
+### Silves
+
+```{r}
+accuracy(Silves.aj.peri, ts.Silves)[,c("MAE")]
+accuracy(Silves.aj.7, ts.Silves)[,c("MAE")]
+accuracy(Silves.aj.14, ts.Silves)[,c("MAE")]
+```
+Por fim, para Silves a escrita se mantem e o window=7 demonstra um melhor desempenho quando avaliado pelo MAE
+
+## Questão 8
+
+```{r}
+autoplot(ts.VRSA, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação os valores ajustados os dados de Vila Real de Santo Antônio")+
+  autolayer(VRSA.aj.7, series = "7 window")
+```
+
+```{r}
+autoplot(ts.Bispo, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação os valores ajustados os dados de Vila do Bispo")+
+  autolayer(Bispo.aj.7, series = "7 window")
+```
+
+```{r}
+autoplot(ts.Tavira, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação os valores ajustados os dados de Tavira")+
+  autolayer(Tavira.aj.7, series = "7 window")
+```
+
+```{r}
+autoplot(ts.Silves, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação os valores ajustados os dados de Silves")+
+  autolayer(Silves.aj.7, series = "7 window")
+```

@@ -1,0 +1,301 @@
+---
+title: "**Resolução do Teste 3**"
+author: "Thomaz Rodrigues Lima a90985"
+fontsize: 14pt
+#output: pdf_document
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(fpp2)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+load("C:/PENTES/e_redes_work/consola_e_redes.RData")
+```
+
+# 1)
+
+## Vila Real de Santo Antônio
+
+```{r}
+ets(VRSA.treino, ic = "aic")
+```
+
+Segundo os critérios, o ideal seria o "A,N,A"
+
+## Vila do Bispo
+
+```{r}
+ets(Bispo.treino, ic = "aic")
+```
+
+Segundo os critérios, o ideal seria o "A,N,A"
+
+## Tavira
+
+```{r}
+ets(Tavira.treino, ic = "aic")
+```
+
+De acordo com os critérios pré estabelecidos o ideal seria o "M,Ad,M"
+
+## Silves
+
+```{r}
+ets(Silves.treino, ic = "aic")
+```
+
+De acordo com as medidas de erro, o ideal seria o "M,A,M"
+
+# 2) 
+
+## Vila Real de Santo Antônio
+
+```{r}
+VRSA.ets <- forecast(ets(VRSA.treino), h)$mean
+```
+
+## Vila do Bispo
+
+```{r}
+Bispo.ets <- forecast(ets(Bispo.treino), h)$mean
+```
+
+## Tavira
+
+```{r}
+Tavira.ets <- forecast(ets(Tavira.treino), h)$mean
+```
+
+## Silves
+
+```{r}
+Silves.ets <- forecast(ets(Silves.treino), h)$mean
+```
+
+# 3)
+
+## Vila Real de Santo Antônio
+
+```{r}
+rob.VRSA <- test.Outliers.STL(VRSA.treino)
+VRSA.stlf.peri <- stlf(VRSA.treino, robust = rob.VRSA, s.window = "periodic", h)$mean
+VRSA.stlf.7 <- stlf(VRSA.treino, robust = rob.VRSA, s.window = 7, h)$mean
+VRSA.stlf.15 <- stlf(VRSA.treino, robust = rob.VRSA, s.window = 15, h)$mean
+
+VRSA.stlf.peri.bc <- stlf(VRSA.treino, robust = rob.VRSA, lambda = "auto", s.window = "periodic", h)$mean
+VRSA.stlf.7.bc <- stlf(VRSA.treino, robust = rob.VRSA, lambda = "auto", s.window = 7, h)$mean
+VRSA.stlf.15.bc <- stlf(VRSA.treino, robust = rob.VRSA, lambda = "auto", s.window = 15, h)$mean
+```
+
+## Vila do Bispo
+
+```{r}
+rob.Bispo <- test.Outliers.STL(Bispo.treino)
+Bispo.stlf.peri <- stlf(Bispo.treino, robust = rob.Bispo, s.window = "periodic", h)$mean
+Bispo.stlf.7 <- stlf(Bispo.treino, robust = rob.Bispo, s.window = 7, h)$mean
+Bispo.stlf.15 <- stlf(Bispo.treino, robust = rob.Bispo, s.window = 15, h)$mean
+
+Bispo.stlf.peri.bc <- stlf(Bispo.treino, robust = rob.Bispo, lambda = "auto", s.window = "periodic", h)$mean
+Bispo.stlf.7.bc <- stlf(Bispo.treino, robust = rob.Bispo, lambda = "auto", s.window = 7, h)$mean
+Bispo.stlf.15.bc <- stlf(Bispo.treino, robust = rob.Bispo, lambda = "auto", s.window = 15, h)$mean
+```
+
+## Tavira
+
+```{r}
+rob.Tavira <- test.Outliers.STL(Tavira.treino)
+Tavira.stlf.peri <- stlf(Tavira.treino, robust = rob.Tavira, s.window = "periodic", h)$mean
+Tavira.stlf.7 <- stlf(Tavira.treino, robust = rob.Tavira, s.window = 7, h)$mean
+Tavira.stlf.15 <- stlf(Tavira.treino, robust = rob.Tavira, s.window = 15, h)$mean
+
+Tavira.stlf.peri.bc <- stlf(Tavira.treino, robust = rob.Tavira, lambda = "auto", s.window = "periodic", h)$mean
+Tavira.stlf.7.bc <- stlf(Tavira.treino, robust = rob.Tavira, lambda = "auto", s.window = 7, h)$mean
+Tavira.stlf.15.bc <- stlf(Tavira.treino, robust = rob.Tavira, lambda = "auto", s.window = 15, h)$mean
+```
+
+## Silves
+
+```{r}
+rob.Silves <- test.Outliers.STL(Silves.treino)
+Silves.stlf.peri <- stlf(Silves.treino, robust = rob.Silves, s.window = "periodic", h)$mean
+Silves.stlf.7 <- stlf(Silves.treino, robust = rob.Silves, s.window = 7, h)$mean
+Silves.stlf.15 <- stlf(Silves.treino, robust = rob.Silves, s.window = 15, h)$mean
+
+Silves.stlf.peri.bc <- stlf(Silves.treino, robust = rob.Silves, lambda = "auto", s.window = "periodic", h)$mean
+Silves.stlf.7.bc <- stlf(Silves.treino, robust = rob.Silves, lambda = "auto", s.window = 7, h)$mean
+Silves.stlf.15.bc <- stlf(Silves.treino, robust = rob.Silves, lambda = "auto", s.window = 15, h)$mean
+```
+
+# 4)
+
+## Vila Real de Santo Antônio
+
+```{r}
+accuracy(VRSA.ets,VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.stlf.peri,VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.stlf.7,VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.stlf.15,VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.stlf.peri.bc,VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.stlf.7.bc,VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.stlf.15.bc,VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro a escolha mais adequada para essa sitação seria o STLF com s.window = 7 sem transformação BoxCox
+
+## Vila do Bispo
+
+```{r}
+accuracy(Bispo.ets,Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.stlf.peri,Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.stlf.7,Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.stlf.15,Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.stlf.peri.bc,Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.stlf.7.bc,Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.stlf.15.bc,Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+De acordo com as medidas de Erro, o a melhor escolha seria o STLF com s.window = 15 e com Transformação BoxCox
+
+## Tavira
+
+```{r}
+accuracy(Tavira.ets,Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.stlf.peri,Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.stlf.7,Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.stlf.15,Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.stlf.peri.bc,Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.stlf.7.bc,Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.stlf.15.bc,Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+Segundo as medidas de Erro, novamente, a escolha mais adequada a situação em questão é o STLF com s.window = 15 e com transformação BoxCox
+
+## Silves
+
+```{r}
+accuracy(Silves.ets,Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.stlf.peri,Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.stlf.7,Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.stlf.15,Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.stlf.peri.bc,Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.stlf.7.bc,Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.stlf.15.bc,Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro, e com uma margem considerável, a melhor escolha para essa sitação seria o ETS
+
+# 5)
+
+## Vila Real de Santo Antônio
+
+```{r}
+accuracy(VRSA.stlf.7,VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.VRSA,VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.VRSA.13,VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+As melhores previsões da Tarefa 2 para Vila Real de Santo Antônio foram, Meanf + Seazonal Naive para o modelo de decomposição Multiplicativo, e Drift + Seazonal Naive  e s.window = 13 para o modelo de decomposição de Loess. 
+
+Quando comparamos ambos as previsões com a nova previsão STLF com s.window = 7, podemos observar que a previsão com o modelo de Loess apresenta o pior desempenho entre as 3. Por outro lado, a previsão do Modelo Multiplicativo a previsão STLF se mostram bastante próximas, com uma ligeira vantagem para a do Multiplicativo.
+
+```{r}
+autoplot(VRSA.teste, xlab = "Tempo", ylab = "Consumo de Energia")+
+  autolayer(prev.meanf.VRSA, series = "Multiplicativo")+
+  autolayer(VRSA.stlf.7, series = "STLF")+
+  autolayer(prev.drift.VRSA.13, series = "Loess")
+```
+
+## Vila do Bispo
+
+```{r}
+accuracy(Bispo.stlf.15.bc,Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Bispo,Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.naive.Bispo.7,Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+As melhores previsões da Tarefa 2 para Vila do Bispo foram, Meanf + Seazonal Naive para o modelo de decomposição Aditivo, e Naive + Seazonal Naive  e s.window = 7 para o modelo de decomposição de Loess. 
+
+Ao comparar as previsões em questão, podemos observar que aquela que apresentou o pior desempenho foi a STLF, E também foi possível vizualizar uma equivalÇencia razoável Entre o modelo de Loess e o aditivo, com uma leve vantagem para o último.
+
+```{r}
+autoplot(Bispo.teste, xlab = "Tempo", ylab = "Consumo de Energia")+
+  autolayer(prev.meanf.Bispo, series = "Aditivo")+
+  autolayer(Bispo.stlf.15.bc, series = "STLF BoxCox")+
+  autolayer(prev.naive.Bispo.7, series = "Loess")
+```
+
+## Tavira
+
+```{r}
+accuracy(Tavira.stlf.15.bc,Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.naive.Tavira,Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Tavira.7,Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Os maiores destaques enrte as previsões da 2° Tarefa para Tavira foram, Naive + Seazonal Naive para o modelo de decomposição Aditivo, e Meanf + Seazonal Naive  e s.window = 7 para o modelo de decomposição de Loess. 
+
+Na compração das 3 previsões podemos observar uma clara desvatagem para o de Loess, que só se destaca no MAPE, por outro lado, O Aditivo e o STLF são bastante equivalentes entre si, com cada um tendo bantagem em uma medida diferente, mas por ter um menor MAE, a escolha de melhor previsão vai para o STLF
+
+```{r}
+autoplot(Tavira.teste, xlab = "Tempo", ylab = "Consumo de Energia")+
+  autolayer(prev.naive.Tavira, series = "Aditivo")+
+  autolayer(Tavira.stlf.15.bc, series = "STLF BoxCox")+
+  autolayer(prev.meanf.Tavira.7, series = "Loess")
+```
+
+## Silves
+
+```{r}
+accuracy(Silves.ets,Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.Silves,Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.naive.Silves.7,Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Em Silves, as melhores previões da Tarefa de número 2 foram, Drift + Seazonal Naive para o modelo de decomposição Aditivo, e Naive + Seazonal Naive  e s.window = 7 para o modelo de decomposição de Loess. 
+
+Comparando as 3 previsões, logo podemos descartar a previsão do modelo aditivo, pois a mesma é a que se sai pior nas 3 medidas de erro. Por outro lado, A previsão do Modelo de Loess se destaca bastante por ter o melhor RMSE, mas a previsão de ETS se sair razoavelemete melhor nas outras 2 medidas, por isso vai será a escolhida.
+
+```{r}
+autoplot(Silves.teste, xlab = "Tempo", ylab = "Consumo de Energia")+
+  autolayer(prev.drift.Silves, series = "Aditivo")+
+  autolayer(Silves.ets, series = "STLF BoxCox")+
+  autolayer(prev.naive.Silves.7, series = "Loess")
+```
+
+# 6)
+
+## Vila Real de Santo Antônio
+
+```{r}
+checkresiduals(VRSA.decM.ajust)
+```
+
+O Valor é infeior a 0.05, logo a hipótese nula está descartada.
+
+## Vila do Bispo
+
+```{r}
+checkresiduals(Bispo.decA.ajust)
+```
+
+O valor é superior a 0.05, logo a hipótese nula não pode ser descartada
+
+## Tavira
+
+```{r}
+checkresiduals(Tavira.treino)
+```
+
+O valor é infeior a 0.05, logo a hipótese nula deve ser descartada
+
+## Silves
+
+```{r}
+Silves.ets.t <- ets(Silves.treino) #Havia aplicado a transformação diretamente no forecast
+checkresiduals(Silves.ets.t)
+```
+
+O valor é superior a 0.05, logo a hipótese nula não pode ser descartada

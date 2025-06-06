@@ -1,0 +1,391 @@
+---
+title: "**Resolução do Teste 2**"
+author: "Thomaz Rodrigues Lima a90985"
+fontsize: 14pt
+#output: pdf_document
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(fpp2)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+load("C:/PENTES/e_redes_work/consola_e_redes.RData")
+```
+
+```{r}
+taman <- length(ts.VRSA)
+h = 11
+
+VRSA.treino <- window(ts.VRSA[1:(taman-h)])
+VRSA.teste <-window(ts.VRSA, start=end(ts.VRSA)-h)
+ts.VRSA.treino <- ts(VRSA.treino, frequency =12, start = c(2020,11))
+ts.VRSA.teste <- ts(VRSA.teste, frequency =12, start = c(2024,1), end = c(2024,11))
+
+Bispo.treino <- window(ts.Bispo[1:(taman-h)])
+Bispo.teste <-window(ts.Bispo[(taman-h+1):taman])
+ts.Bispo.treino <- ts(Bispo.treino, frequency =12, start = c(2020,11))
+ts.Bispo.teste <- ts(Bispo.teste, frequency =12, start = c(2024,1) , end = c(2024,11))
+
+Tavira.treino <- window(ts.Tavira[1:(taman-h)])
+Tavira.teste <-window(ts.Tavira[(taman-h+1):taman])
+ts.Tavira.treino <- ts(Tavira.treino, frequency =12, start = c(2020,11))
+ts.Tavira.teste <- ts(Tavira.teste, frequency =12, start = c(2024,1) , end = c(2024,11))
+
+Silves.treino <- window(ts.Silves[1:(taman-h)])
+Silves.teste <-window(ts.Silves[(taman-h+1):taman])
+ts.Silves.treino <- ts(Silves.treino, frequency =12, start = c(2020,11))
+ts.Silves.teste <- ts(Silves.teste, frequency =12, start = c(2024,1), end = c(2024,11))
+```
+1) Aplique os métodos de decomposição clássica aos dados de treino. Para o melhor ajustamento, obtenha as previsões h.
+
+Vila Real de Santo Antônio
+```{r}
+VRSA.treino.decA <- decompose(ts.VRSA.treino, type = "additive")
+VRSA.treino.decM <- decompose(ts.VRSA.treino, type = "multi")
+
+VRSA.decA.ajust <- VRSA.treino.decA$seasonal + VRSA.treino.decA$trend
+VRSA.decM.ajust <- VRSA.treino.decM$seasonal * VRSA.treino.decM$trend
+
+accuracy(VRSA.decA.ajust, ts.VRSA.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.decM.ajust, ts.VRSA.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo as medidas, RMSE e MAPE, apresentadas a melhor escolha é o método multiplicativo.
+
+```{r}
+st.VRSA <- VRSA.treino.decM$seasonal
+at.VRSA <- seasadj(VRSA.treino.decM)
+
+prev.st.VRSA <- snaive(st.VRSA, h)$mean
+
+prev.at.naive.VRSA <- snaive(at.VRSA, h)$mean
+prev.at.meanf.VRSA <- meanf(at.VRSA, h)$mean
+prev.at.drift.VRSA <- rwf(at.VRSA, h, drift = TRUE)$mean
+
+prev.naive.VRSA <- prev.st.VRSA * prev.at.naive.VRSA
+prev.meanf.VRSA <- prev.st.VRSA * prev.at.meanf.VRSA
+prev.drift.VRSA <- prev.st.VRSA * prev.at.drift.VRSA
+
+accuracy(prev.naive.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro, unanimamente a melhor previsão foi a Meanf + Seasonal Naive
+
+Vila do Bispo
+```{r}
+Bispo.treino.decA <- decompose(ts.Bispo.treino, type = "additive")
+Bispo.treino.decM <- decompose(ts.Bispo.treino, type = "multi")
+
+Bispo.decA.ajust <- Bispo.treino.decA$seasonal + Bispo.treino.decA$trend
+Bispo.decM.ajust <- Bispo.treino.decM$seasonal * Bispo.treino.decM$trend
+
+accuracy(Bispo.decA.ajust, ts.Bispo.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.decM.ajust, ts.Bispo.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo todas as medidas apresentadas a melhor escolha é o método aditivo
+
+```{r}
+st.Bispo <- Bispo.treino.decA$seasonal
+at.Bispo <- seasadj(Bispo.treino.decA)
+
+prev.st.Bispo <- snaive(st.Bispo, h)$mean
+
+prev.at.naive.Bispo <- snaive(at.Bispo, h)$mean
+prev.at.meanf.Bispo <- meanf(at.Bispo, h)$mean
+prev.at.drift.Bispo <- rwf(at.Bispo, h, drift = TRUE)$mean
+
+prev.naive.Bispo <- prev.st.Bispo + prev.at.naive.Bispo
+prev.meanf.Bispo <- prev.st.Bispo + prev.at.meanf.Bispo
+prev.drift.Bispo <- prev.st.Bispo + prev.at.drift.Bispo
+
+accuracy(prev.naive.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+A melhor combinação possível é igualmente a meanf + snaive
+
+Tavira
+```{r}
+Tavira.treino.decA <- decompose(ts.Tavira.treino, type = "additive")
+Tavira.treino.decM <- decompose(ts.Tavira.treino, type = "multi")
+
+Tavira.decA.ajust <- Tavira.treino.decA$seasonal + Tavira.treino.decA$trend
+Tavira.decM.ajust <- Tavira.treino.decM$seasonal * Tavira.treino.decM$trend
+
+accuracy(Tavira.decA.ajust, ts.Tavira.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.decM.ajust, ts.Tavira.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+Para Tavira, seguindo as medidas de erro, o que melhor se enquadra é o Aditivo
+
+```{r}
+st.Tavira <- Tavira.treino.decA$seasonal
+at.Tavira <- seasadj(Tavira.treino.decA)
+
+prev.st.Tavira <- snaive(st.Tavira, h)$mean
+
+prev.at.naive.Tavira <- snaive(at.Tavira, h)$mean
+prev.at.meanf.Tavira <- meanf(at.Tavira, h)$mean
+prev.at.drift.Tavira <- rwf(at.Tavira, h, drift = TRUE)$mean
+
+prev.naive.Tavira <- prev.st.Tavira + prev.at.naive.Tavira
+prev.meanf.Tavira <- prev.st.Tavira + prev.at.meanf.Tavira
+prev.drift.Tavira <- prev.st.Tavira + prev.at.drift.Tavira
+
+accuracy(prev.naive.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+Segundo as medidas de erro, para Tavira a melhor escolha é a do Naive com Snaive
+
+Silves
+```{r}
+Silves.treino.decA <- decompose(ts.Silves.treino, type = "additive")
+Silves.treino.decM <- decompose(ts.Silves.treino, type = "multi")
+
+Silves.decA.ajust <- Silves.treino.decA$seasonal + Silves.treino.decA$trend
+Silves.decM.ajust <- Silves.treino.decM$seasonal * Silves.treino.decM$trend
+
+accuracy(Silves.decA.ajust, ts.Silves.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.decM.ajust, ts.Silves.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo as medidas de errro, a melhor escolha seria a do modelo Multiplicativo
+
+```{r}
+st.Silves <- Silves.treino.decM$seasonal
+at.Silves <- seasadj(Silves.treino.decM)
+
+prev.st.Silves <- snaive(st.Silves, h)$mean
+
+prev.at.naive.Silves <- snaive(at.Silves, h)$mean
+prev.at.meanf.Silves <- meanf(at.Silves, h)$mean
+prev.at.drift.Silves <- rwf(at.Silves, h, drift = TRUE)$mean
+
+prev.naive.Silves <- prev.st.Silves * prev.at.naive.Silves
+prev.meanf.Silves <- prev.st.Silves * prev.at.meanf.Silves
+prev.drift.Silves <- prev.st.Silves * prev.at.drift.Silves
+
+accuracy(prev.naive.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.drift.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+Segundo as medidas de Erro, a melhor escolha seria o naive + snaive
+
+2)
+
+Vila Real de Santo Antônio
+
+```{r}
+rob.VRSA = test.Outliers.STL(ts.VRSA.treino)
+
+VRSA.treino.peri <- stl(ts.VRSA.treino, s.window = "periodic", robust = rob.VRSA)
+VRSA.treino.7 <- stl(ts.VRSA.treino, s.window = 7, robust = rob.VRSA)
+VRSA.treino.13 <- stl(ts.VRSA.treino, s.window = 13, robust = rob.VRSA)
+
+VRSA.peri.ajust <- ts.VRSA.treino - remainder(VRSA.treino.peri)
+VRSA.7.ajust <- ts.VRSA.treino - remainder(VRSA.treino.7)
+VRSA.13.ajust <- ts.VRSA.treino - remainder(VRSA.treino.13)
+
+accuracy(VRSA.peri.ajust, ts.VRSA.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.7.ajust, ts.VRSA.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.13.ajust, ts.VRSA.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+Segundo as medidas de erro o idal é proseguir com o windown = 13
+
+```{r}
+prev.st.VRSA <- snaive(VRSA.13.ajust , h)$mean
+prev.at.naive.VRSA <- snaive(VRSA.13.ajust, h)$mean
+prev.at.meanf.VRSA <- meanf(VRSA.13.ajust, h)$mean
+prev.at.drift.VRSA <- rwf(VRSA.13.ajust, h, drift = TRUE)$mean
+
+accuracy(prev.at.naive.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.meanf.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.drift.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.st.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+Segundo as medidas de erro a melhor previsão seria a meanf
+
+Bispo
+
+```{r}
+rob.Bispo = test.Outliers.STL(ts.Bispo.treino)
+
+Bispo.treino.peri <- stl(ts.Bispo.treino, s.window = "periodic", robust = rob.Bispo)
+Bispo.treino.7 <- stl(ts.Bispo.treino, s.window = 7, robust = rob.Bispo)
+Bispo.treino.13 <- stl(ts.Bispo.treino, s.window = 13, robust = rob.Bispo)
+
+Bispo.peri.ajust <- ts.Bispo.treino - remainder(Bispo.treino.peri)
+Bispo.7.ajust <- ts.Bispo.treino - remainder(Bispo.treino.7)
+Bispo.13.ajust <- ts.Bispo.treino - remainder(Bispo.treino.13)
+
+accuracy(Bispo.peri.ajust, ts.Bispo.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.7.ajust, ts.Bispo.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Bispo.13.ajust, ts.Bispo.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+Segundo as medidas de erro o idal é proseguir com o windown = 7
+
+```{r}
+prev.st.Bispo <- snaive(Bispo.7.ajust , h)$mean
+prev.at.naive.Bispo <- snaive(Bispo.7.ajust, h)$mean
+prev.at.meanf.Bispo <- meanf(Bispo.7.ajust, h)$mean
+prev.at.drift.Bispo <- rwf(Bispo.7.ajust, h, drift = TRUE)$mean
+
+accuracy(prev.at.naive.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.meanf.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.drift.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.st.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Segundo o melhor seria p snaive
+
+Tavira
+
+```{r}
+rob.Tavira = test.Outliers.STL(ts.Tavira.treino)
+
+Tavira.treino.peri <- stl(ts.Tavira.treino, s.window = "periodic", robust = rob.Tavira)
+Tavira.treino.7 <- stl(ts.Tavira.treino, s.window = 7, robust = rob.Tavira)
+Tavira.treino.13 <- stl(ts.Tavira.treino, s.window = 13, robust = rob.Tavira)
+
+Tavira.peri.ajust <- ts.Tavira.treino - remainder(Tavira.treino.peri)
+Tavira.7.ajust <- ts.Tavira.treino - remainder(Tavira.treino.7)
+Tavira.13.ajust <- ts.Tavira.treino - remainder(Tavira.treino.13)
+
+accuracy(Tavira.peri.ajust, ts.Tavira.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.7.ajust, ts.Tavira.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.13.ajust, ts.Tavira.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+Segundo as medidas de erro o idal é proseguir com o windown = 7
+
+```{r}
+prev.st.Tavira <- snaive(Tavira.7.ajust , h)$mean
+prev.at.naive.Tavira <- snaive(Tavira.7.ajust, h)$mean
+prev.at.meanf.Tavira <- meanf(Tavira.7.ajust, h)$mean
+prev.at.drift.Tavira <- rwf(Tavira.7.ajust, h, drift = TRUE)$mean
+
+accuracy(prev.at.naive.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.meanf.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.drift.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.st.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+De acordo com as medidas de erro o ideal seria seguir com o meanf
+
+Silves
+
+```{r}
+rob.Silves = test.Outliers.STL(ts.Silves.treino)
+
+Silves.treino.peri <- stl(ts.Silves.treino, s.window = "periodic", robust = rob.Silves)
+Silves.treino.7 <- stl(ts.Silves.treino, s.window = 7, robust = rob.Silves)
+Silves.treino.13 <- stl(ts.Silves.treino, s.window = 13, robust = rob.Silves)
+
+Silves.peri.ajust <- ts.Silves.treino - remainder(VRSA.treino.peri)
+Silves.7.ajust <- ts.Silves.treino - remainder(VRSA.treino.7)
+Silves.13.ajust <- ts.Silves.treino - remainder(VRSA.treino.13)
+
+accuracy(Silves.peri.ajust, ts.Silves.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.7.ajust, ts.Silves.treino)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.13.ajust, ts.Silves.treino)[,c("RMSE", "MAE", "MAPE")]
+```
+Segundo as medidas de erro o idal é proseguir com o windown = 13
+
+```{r}
+prev.st.Silves <- snaive(Silves.13.ajust , h)$mean
+prev.at.naive.Silves <- snaive(Silves.13.ajust, h)$mean
+prev.at.meanf.Silves <- meanf(Silves.13.ajust, h)$mean
+prev.at.drift.Silves <- rwf(Silves.13.ajust, h, drift = TRUE)$mean
+
+accuracy(prev.at.naive.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.meanf.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.drift.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.st.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+De acordo com as medidas de erro o ideal seria o drift
+
+
+3) 
+
+Vila Real de Santo Antônio
+
+```{r}
+autoplot(ts.VRSA, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação entre Loess e os dados de Vila Real de Santo Antônio")+
+  autolayer(prev.meanf.VRSA, series = "Meanf DecM")+
+  autolayer(prev.at.meanf.VRSA, series = "13 window Meanf")
+```
+
+A previsão do modelo Multiplicativo ficou Bastante próxima dos dados reais, diferentemnete da decomposição de Loess
+
+Bispo
+
+```{r}
+autoplot(ts.Bispo, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação entre Loess e os dados de Vila do Bispo")+
+  autolayer(prev.meanf.Bispo, series = "Meanf DecM")+
+  autolayer(prev.st.Bispo, series = "7 window Snaive")
+```
+
+Igualmente falando, podemos dizer a previsão do modelo Aditivo ficou mais próxima do real, proém com um começo bastante diferente em relação aos dados reais. Já no modelo de Loess, Tivemos justamente o comportamente inverso
+
+Tavira
+
+```{r}
+autoplot(ts.Tavira, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação entre Loess e os dados de Tavira")+
+  autolayer(prev.naive.Tavira, series = "Naive f DecM")+
+  autolayer(prev.at.meanf.Tavira, series = "7 window Meanf")
+```
+
+O Comportamento da previsão do decomposição aditivo ficou bastante próxima visualmente do que podemos observer dos dados reais. Difernetemente do da decomposição de loess
+
+```{r}
+autoplot(ts.Silves, xlab = "Tempo", ylab = "Consumo de Energia", main = "Comparação entre Loess e os dados de Silves")+
+  autolayer(prev.naive.Silves, series = "Naive f DecM")+
+  autolayer(prev.at.drift.Silves, series = "7 window Meanf")
+```
+
+No caso de Silves, mais uma vez podemos observar uma previsão bastante próxima do que aocnteceu na realidade. Diferentemente do decomposição de Loess
+
+4)
+
+Vila Real de Santo Antônio
+
+```{r}
+accuracy(prev.meanf.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.meanf.VRSA, ts.VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+Segundo podemos Observar pelas medidas de erro, mesmo que a primeira vista o teste com a decomposição aditiva tenha parecido mais adequado, não observamos isso nas medidas de erro.
+
+Vila do Bispo
+
+```{r}
+accuracy(prev.meanf.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.st.Bispo, ts.Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+Igualmente ao exemplo anteior, mesmo com a proximidade dos dois, a decomposição de loess se sobressaiu
+
+Tavira
+
+```{r}
+accuracy(prev.naive.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.meanf.Tavira, ts.Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+Igualmente aos anteiores, o modelo de loess se sobressaiu
+
+Silves
+
+```{r}
+accuracy(prev.meanf.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.at.meanf.Silves, ts.Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Mesmo que o MAPE do Modelo aditivo leve a vantagem, o modelo de loess se sobressaiu.
+
+5) O que a questçao 4 pode apresentar é que mesmo que o ajustamento tenha as previsões mais visualmente precisas, os testes ainda precisam ser feitos e observados com cuidado. Pois uma análise rápida e pautada apenas no visual pode levar a enganos de avaliação.

@@ -1,0 +1,228 @@
+---
+title: "**Resolução do Teste 4**"
+author: "Thomaz Rodrigues Lima a90985"
+fontsize: 14pt
+#output: pdf_document
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(fpp2)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+load("C:/PENTES/e_redes_work/consola_e_redes.RData")
+```
+
+# 1) 
+## Vila Real de Santo Antônio
+```{r}
+(VRSA.auto.arima <- auto.arima(VRSA.treino))
+```
+Segundo o Auto Arima, o ideal seria fazer apenas uma diferenciação de primeira ordem, sem mexer no AR nem no MA
+
+## Vila do Bispo
+```{r}
+(Bispo.auto.arima <- auto.arima(Bispo.treino))
+```
+
+Com os dados da Vila do Bispo, podemos observar que o ideal seria um AR igual a 2, diferenciação de 1° grau e sem o uso de MA
+
+## Tavira
+```{r}
+(Tavira.auto.arima <- auto.arima(Tavira.treino))
+```
+
+Diferente das anteriores, nos dados de Tavrira só se fez necessário uma AR igual a 1, pois a diferenciação foi feita apenas na parte sazonal.
+
+## Silves
+```{r}
+(Silves.auto.arima <- auto.arima(Silves.treino))
+```
+
+Silves, por sua vez, apresentou um comportamento muito semelhande ao de Tavira, onde só se fez necessário uma AR igual a 1, tendo em vista que a diferenciação foi feita apenas na parte sazonal.
+
+# 2)
+## Vila Real de Santo Antônio
+```{r}
+VRSA.auto.prev <- forecast(VRSA.auto.arima, h = 11)$mean
+accuracy(VRSA.auto.prev, VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+## Vila do Bispo
+```{r}
+Bispo.auto.prev <- forecast(Bispo.auto.arima, h = 11)$mean
+accuracy(Bispo.auto.prev, Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+## Tavira
+```{r}
+Tavira.auto.prev <- forecast(Tavira.auto.arima, h = 11)$mean
+accuracy(Tavira.auto.prev, Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+## Silves
+```{r}
+Silves.auto.prev <- forecast(Silves.auto.arima, h = 11)$mean
+accuracy(Silves.auto.prev, Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+# 3)
+
+## Vila Real de Santo Antônio
+```{r}
+autoplot(VRSA.auto.prev, series = "Auto Arima")+
+  autolayer(VRSA.teste, series = "Dados de Teste")+
+  autolayer(VRSA.stlf.7, series = "STLF 7")
+```
+
+Para Vila Real de Santo Antônio, Graficamente, a previsão que mais parece adequada se Trata da STLF.7, Pois a previsão do modelo auto.arima, se quer chega a tangenciar os dados reais de teste
+
+## Vila do Bispo
+```{r}
+autoplot(Bispo.auto.prev, series = "Auto Arima")+
+  autolayer(Bispo.teste, series = "Dados de Teste")+
+  autolayer(prev.meanf.Bispo, series = "Meanf Aditivo")
+```
+
+De forma Similar ao observado em Vila Real, aqui o a previsão meanf feita a partir do modelo aditivo também parece mais adequada aos dados de teste. Mesmo que em um dos pontos o Modelo Auto arima ainda se sobreponha
+
+## Tavira
+```{r}
+autoplot(Tavira.auto.prev, series = "Auto Arima")+
+  autolayer(Tavira.teste, series = "Dados de Teste")+
+  autolayer(Tavira.stlf.15.bc, series = "STLF 15 BoxCox")
+```
+
+De todas as previsões observadas até então, provavelmente as mais difícil de decidir são as de Tavira, mas pela maior proximidade, a escolha do STLF.15 feito a partir da Transformação BoxCox dos dados de treino de Tavira, ainda parece a mais adequada visualmente.
+
+## Silves
+```{r}
+autoplot(Silves.auto.prev, series = "Auto Arima")+
+  autolayer(Silves.teste, series = "Dados de Teste")+
+  autolayer(Silves.ets, series = "ETS")
+```
+
+Silves foi outro conselho difícil para se tirar uma conclusão, mas a previsão feita com base no modelo ETS, parece a mais adequada.
+
+# 4)
+
+## Vila Real de Santo Antônio
+```{r}
+accuracy(VRSA.auto.prev, VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(VRSA.stlf.7, VRSA.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Com base em todas as medidas de erro, a escolha pelo modelo stlf com s.window = 7 é unânime
+
+## Vila do Bispo
+```{r}
+accuracy(Bispo.auto.prev, Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(prev.meanf.Bispo, Bispo.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Assim como em Vila Real, na Vila do Bispo, não houve uma única medida de erro que dessa uma vantagem ao modelo auto.arima, logo, o modelo escolhido é o aditivo com a previsão meanf + seasonal naive
+
+## Tavira
+```{r}
+accuracy(Tavira.auto.prev, Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Tavira.stlf.15.bc, Tavira.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+
+Em Tavira, em média, o modelo STLF s.window = 15 e transformação BoxCox teve, em média, um desempenho cerca de 2.1x melhor do que o Auto Arima, então, o mesmo será o escolhido
+
+## Silves
+```{r}
+accuracy(Silves.auto.prev, Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+accuracy(Silves.ets, Silves.teste)[,c("RMSE", "MAE", "MAPE")]
+```
+Tal qual nos concelhos anteriores, em Silves, a melhor escolha segue sendo a previsão que não foi baseada no auto.arima, logo a escolhida é a baseada no modelo ets.
+
+# 5)
+
+## Vila Real de Santo Antônio
+```{r}
+checkresiduals(VRSA.decM.ajust)
+```
+
+Para Vila Real de Santo Antônio, a melhor previsão não é confiável, tendo em vista que os seus resíduos não são Ruído Branco
+
+## Vila do Bispo
+```{r}
+checkresiduals(Bispo.decA.ajust)
+```
+
+Para a Vila do Bispo, o P-value é inferior a 0.05, logo seus resíduos são ruído branco, e sua previsçao é confiável.
+
+## Tavira
+```{r}
+checkresiduals(Tavira.treino)
+```
+
+Para Tavira, a hipótese nula não pode ser descartada, logo sua melhor previsão não é confiável
+
+## Silves
+```{r}
+checkresiduals(Silves.ets.t)
+```
+
+Para Silves, seus resíduos são ruído branco, logo, podemos confiar em sua previsão
+
+# 6)
+
+## Vila Real de Santo Antônio
+```{r}
+VRSA.nova <- stlf(ts.VRSA, h = 13, s.window = 7)$mean
+```
+
+## Vila do Bispo
+```{r}
+Bispo.decAA <- decompose(ts.Bispo, type = "additive")
+st.BispoA <- Bispo.decAA$seasonal
+at.BispoA <- seasadj(Bispo.decAA)
+
+prev.st.A <- snaive(st.BispoA, h = 13)$mean
+prev.at.A <- meanf(at.BispoA, h = 13)$mean
+Bispo.nova <- prev.at.A + prev.st.A
+```
+
+## Tavira
+```{r}
+lamb = BoxCox.lambda(ts.Tavira)
+Tavira.nova <- stlf(ts.Tavira, h = 13, s.window = 15, lambda = lamb)$mean
+```
+
+## Silves
+```{r}
+Silves.nova <- forecast(ets(ts.Silves), h = 13)$mean
+```
+
+# 7)
+
+## Vila Real de Santo Antônio
+```{r}
+autoplot(ts.VRSA, xlab = "Tempo", ylab = "Consumo de Energia")+
+  autolayer(VRSA.nova, series = "Previsao para 2025")
+```
+
+## Vila do Bispo
+```{r}
+autoplot(ts.Bispo, xlab = "Tempo", ylab = "Consumo de Energia")+
+  autolayer(Bispo.nova, series = "Previsao para 2025")
+```
+
+## Tavira
+```{r}
+autoplot(ts.Tavira, xlab = "Tempo", ylab = "Consumo de Energia")+
+  autolayer(Tavira.nova, series = "Previsao para 2025")
+```
+
+## Silves
+```{r}
+autoplot(ts.Silves, xlab = "Tempo", ylab = "Consumo de Energia")+
+  autolayer(Silves.nova, series = "Previsao para 2025")
+```
+
