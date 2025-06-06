@@ -1,62 +1,86 @@
-# Exercícios de Séries Temporais
+# 📈 Exercícios de Séries Temporais
 
-## Descrição
+Repositório contendo exercícios práticos e materiais de estudo da disciplina de **Análise e Previsão de Séries Temporais**.
 
-Este repositório contém os exercícios realizados durante a disciplina de **Séries Temporais**. O curso aborda métodos e modelos utilizados na análise e previsão de séries temporais, com ênfase em técnicas aplicáveis a áreas como finanças, turismo, gestão de recursos naturais, entre outras.
+## 🔍 Visão Geral
 
-A série temporal é uma sequência de observações indexadas pelo tempo e, neste curso, exploramos como analisar e prever valores futuros com base no comportamento passado da série. O objetivo é capacitar o aluno a realizar previsões precisas de variáveis como taxa de desemprego, consumo de água e temperatura em períodos futuros.
+Este projeto reúne implementações de técnicas fundamentais para análise e previsão de séries temporais - sequências de dados indexadas temporalmente com aplicações em diversas áreas como:
 
-Os exercícios aqui contidos cobrem os seguintes tópicos e técnicas de análise e previsão de séries temporais:
+- 📊 Finanças e Economia
+- 🌦️ Meteorologia
+- 🏭 Gestão de Operações
+- 💧 Gestão de Recursos Naturais
 
-## Objetivos de Aprendizagem
+## 🎯 Objetivos de Aprendizado
 
-Ao concluir os exercícios, o aluno será capaz de:
-- Realizar uma **análise preliminar** de uma série temporal.
-- Obter conhecimento teórico dos métodos e modelos mais utilizados em previsão.
-- Utilizar métodos e modelos adequados, selecionando o melhor para cada contexto.
-- Desenvolver competências utilizando **R** e/ou **Python** e escrever documentos em **Rmarkdown**.
+### Habilidades Desenvolvidas
+✔️ Realizar análise exploratória de séries temporais  
+✔️ Selecionar e aplicar modelos preditivos adequados  
+✔️ Avaliar desempenho de modelos de previsão  
+✔️ Implementar soluções em **R** e **Python**  
+✔️ Documentar análises com **RMarkdown**
 
-## Conteúdos Programáticos
+### Competências Técnicas
+◻ Componentes de séries temporais (tendência, sazonalidade)  
+◻ Métricas de erro e validação de modelos  
+◻ Diagnóstico de resíduos e autocorrelação  
+◻ Transformações para estacionariedade  
 
-### 1. **Introdução a Séries Temporais**
-- Representação gráfica e identificação de componentes de uma série temporal.
-- Conceitos básicos: **Função de Autocorrelação (FAC)**, **ruído branco**, **teste Ljung-Box**, **transformação de Box-Cox**.
+## 📚 Conteúdo Programático
 
-### 2. **Decomposição de Séries Temporais**
-- **Decomposição clássica**: aditiva e multiplicativa.
-- **Decomposição Seasonal-Trend Decomposition by Loess (STL)**.
-- Estimação das componentes e principais **medidas de erro**.
+### 1. Fundamentos
+- Representação gráfica e componentes temporais
+- Autocorrelação (FAC) e testes (Ljung-Box)
+- Transformação de Box-Cox e normalização
 
-### 3. **Previsão de Séries Temporais**
-- Métodos simples de previsão para séries temporais.
-- Obtenção de previsões para os métodos de decomposição.
-- Diagnóstico dos resíduos através da **FAC**, **teste Ljung-Box** e inspeção da normalidade.
+### 2. Decomposição
+```mermaid
+graph LR
+A[Série Temporal] --> B[Decomposição Clássica]
+A --> C[STL Decomposition]
+B --> D[Aditiva]
+B --> E[Multiplicativa]
+```
 
-### 4. **Métodos de Alisamento Exponencial**
-- **Alisamento Exponencial Simples**.
-- **Holt e Holt-Winters**.
-- Obtenção de previsões e intervalos de previsão.
+### 3. Técnicas de Previsão
+- Métodos ingênuos (Naive, Seasonal Naive)
+- Alisamento exponencial (Holt-Winters)
+- Modelos ARIMA/SARIMA
 
-### 5. **Modelos de Alisamento Exponencial**
-- Estimação dos modelos através de funções automáticas.
-- Seleção de modelos com base em desempenho.
-- Definição de **estacionaridade**, **passeio aleatório**, **diferenças de 1ª, 2ª ordem e sazonais**.
+### 4. Validação
+- Métricas: MAE, RMSE, MASE
+- Diagnóstico de resíduos
+- Intervalos de previsão
 
-### 6. **Modelos ARIMA**
-- Introdução aos modelos **ARIMA** (AutoRegressive Integrated Moving Average) e suas variações.
+## ⚙️ Configuração do Ambiente
+
+### Pré-requisitos
+- Python 3.8+ ou R 4.0+
+- Pacotes essenciais:
+  ```bash
+  # Python
+  pip install statsmodels pandas numpy matplotlib seaborn
   
-## Pré-requisitos
+  # R
+  install.packages(c("forecast", "tseries", "ggplot2"))
+  ```
 
-- **Conhecimentos básicos de estatística** e conceitos fundamentais de séries temporais.
-- Familiaridade com **R** ou **Python** para implementação dos métodos e modelos.
+### Execução
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/series-temporais.git
+   ```
+2. Instale as dependências
+3. Explore os notebooks por tópico:
+   - `/notebooks/1-exploratorio.ipynb`
+   - `/scripts/2-decomposicao.R`
 
-## Como rodar os exercícios
+## 📌 Exemplo Prático
+```python
+# Previsão com Holt-Winters
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-1. Clone este repositório.
-2. Instale as dependências necessárias para rodar os scripts em **R** ou **Python**.
-3. Execute os scripts conforme as instruções de cada exercício.
-
-## Licença
-
-Este repositório contém exercícios educacionais sobre séries temporais e está disponível para fins de estudo e aprendizado.
-
+model = ExponentialSmoothing(serie, trend='add', seasonal='mul')
+results = model.fit()
+forecast = results.forecast(12)
+```
